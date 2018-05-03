@@ -58,4 +58,5 @@ public:
 	afx_msg void OnRebootSystem();
 	afx_msg void OnUpdateRebootSystem(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateRefreshAll(CCmdUI *pCmdUI);
+	afx_msg void OnUpdate();
 };

@@ -139,6 +139,7 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_COMMAND(ID_REBOOT_SYSTEM, &CRemoteControllerDlg::OnRebootSystem)
 	ON_UPDATE_COMMAND_UI(ID_REBOOT_SYSTEM, &CRemoteControllerDlg::OnUpdateRebootSystem)
 	ON_UPDATE_COMMAND_UI(ID_REFRESH_ALL, &CRemoteControllerDlg::OnUpdateRefreshAll)
+	ON_COMMAND(ID_UPDATE, &CRemoteControllerDlg::OnUpdate)
 END_MESSAGE_MAP()
 
 
@@ -466,4 +467,10 @@ void CRemoteControllerDlg::OnUpdateRebootSystem(CCmdUI *pCmdUI)
 void CRemoteControllerDlg::OnUpdateRefreshAll(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnUpdate()
+{
+	g_pSocket->SendCommand("update");
 }

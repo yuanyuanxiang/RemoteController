@@ -47,4 +47,5 @@ public:
 	afx_msg void OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void StopApp();
 	afx_msg void StartApp();
+	afx_msg void UpdateApp();
 };

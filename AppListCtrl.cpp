@@ -56,6 +56,7 @@ BEGIN_MESSAGE_MAP(CAppListCtrl, CListCtrl)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, &CAppListCtrl::OnLvnColumnclick)
 	ON_COMMAND(ID_OP_STOP, &CAppListCtrl::StopApp)
 	ON_COMMAND(ID_OP_START, &CAppListCtrl::StartApp)
+	ON_COMMAND(ID_OP_UPDATE, &CAppListCtrl::UpdateApp)
 END_MESSAGE_MAP()
 
 
@@ -261,5 +262,17 @@ void CAppListCtrl::StartApp()
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
 		g_pSocket->SendCommand("start", W2A(no));
+	}
+}
+
+
+void CAppListCtrl::UpdateApp()
+{
+	if (-1 != m_nIndex)
+	{
+		TRACE("======> UpdateApp index = %d\n", m_nIndex);
+		USES_CONVERSION;
+		CString no = GetItemText(m_nIndex, _no);
+		g_pSocket->SendCommand("update app", W2A(no));
 	}
 }

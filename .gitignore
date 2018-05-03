@@ -6,6 +6,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+.svn
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -301,3 +302,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+*.svn-base
