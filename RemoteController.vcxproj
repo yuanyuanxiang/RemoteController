@@ -111,6 +111,7 @@
   <ItemGroup>
     <ClInclude Include="AppInfo.h" />
     <ClInclude Include="AppListCtrl.h" />
+    <ClInclude Include="cmdList.h" />
     <ClInclude Include="IPConfigDlg.h" />
     <ClInclude Include="RemoteController.h" />
     <ClInclude Include="RemoteControllerDlg.h" />

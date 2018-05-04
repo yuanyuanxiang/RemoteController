@@ -2,6 +2,7 @@
 #include "afx.h"
 #include "socket\SocketClient.h"
 #include "AppInfo.h"
+#include "cmdList.h"
 
 // CAppListCtrl
 

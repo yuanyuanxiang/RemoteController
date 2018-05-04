@@ -183,7 +183,7 @@ void CAppListCtrl::RestartApp()
 		TRACE("======> RestartApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
-		g_pSocket->SendCommand("restart", W2A(no));
+		g_pSocket->SendCommand(RESTART, W2A(no));
 	}
 }
 
@@ -195,7 +195,7 @@ void CAppListCtrl::QueryAppInfo()
 		TRACE("======> QueryAppInfo index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
-		g_pSocket->SendCommand("refresh", W2A(no));
+		g_pSocket->SendCommand(REFRESH, W2A(no));
 	}
 }
 
@@ -249,7 +249,7 @@ void CAppListCtrl::StopApp()
 		TRACE("======> StopApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
-		g_pSocket->SendCommand("stop", W2A(no));
+		g_pSocket->SendCommand(STOP, W2A(no));
 	}
 }
 
@@ -261,7 +261,7 @@ void CAppListCtrl::StartApp()
 		TRACE("======> StartApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
-		g_pSocket->SendCommand("start", W2A(no));
+		g_pSocket->SendCommand(START, W2A(no));
 	}
 }
 
@@ -273,6 +273,7 @@ void CAppListCtrl::UpdateApp()
 		TRACE("======> UpdateApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		CString no = GetItemText(m_nIndex, _no);
-		g_pSocket->SendCommand("update app", W2A(no));
+		std::string cmd = MAKE_CMD(UPDATE, "a");
+		g_pSocket->SendCommand(cmd.c_str(), W2A(no));
 	}
 }

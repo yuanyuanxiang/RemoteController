@@ -140,6 +140,7 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_REBOOT_SYSTEM, &CRemoteControllerDlg::OnUpdateRebootSystem)
 	ON_UPDATE_COMMAND_UI(ID_REFRESH_ALL, &CRemoteControllerDlg::OnUpdateRefreshAll)
 	ON_COMMAND(ID_UPDATE, &CRemoteControllerDlg::OnUpdate)
+	ON_COMMAND(ID_SETTIME, &CRemoteControllerDlg::OnSettime)
 END_MESSAGE_MAP()
 
 
@@ -305,7 +306,7 @@ BOOL CRemoteControllerDlg::PreTranslateMessage(MSG* pMsg)
 
 void CRemoteControllerDlg::OnRefreshAll()
 {
-	g_pSocket->SendCommand("refresh");
+	g_pSocket->SendCommand(REFRESH);
 }
 
 
@@ -319,7 +320,7 @@ void CRemoteControllerDlg::OnPoweroffAll()
 			_T("少御"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
-		g_pSocket->SendCommand("shutdown");
+		g_pSocket->SendCommand(SHUTDOWN);
 }
 
 
@@ -454,7 +455,7 @@ void CRemoteControllerDlg::OnRebootSystem()
 			_T("少御"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
-		g_pSocket->SendCommand("reboot");
+		g_pSocket->SendCommand(REBOOT);
 }
 
 
@@ -472,5 +473,16 @@ void CRemoteControllerDlg::OnUpdateRefreshAll(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnUpdate()
 {
-	g_pSocket->SendCommand("update");
+	g_pSocket->SendCommand(UPDATE);
+}
+
+
+void CRemoteControllerDlg::OnSettime()
+{
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	char buf[64];
+	sprintf_s(buf, "settime:%d,%d,%d,%d,%d,%d,%d,%d", st.wYear, st.wMonth, st.wDayOfWeek, 
+		st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	g_pSocket->SendCommand(buf);
 }

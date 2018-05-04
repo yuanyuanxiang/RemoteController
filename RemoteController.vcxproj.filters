@@ -57,6 +57,9 @@
     <ClInclude Include="IPConfigDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="cmdList.h">
+      <Filter>socket</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteController.cpp">

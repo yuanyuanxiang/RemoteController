@@ -179,7 +179,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.version, GetValue(parameters, "szVersion"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
 		g_pSocket->UpdateAppItem(this, item);
-		sendData("keepalive", strlen("keepalive"));
+		sendData(KEEPALIVE, strlen(KEEPALIVE));
 	}else if(0 == strcmp("Register", cmdType))
 	{
 		/**
@@ -192,7 +192,8 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		</request>
 		*/
 		// »Ø¸´×¢²á³É¹¦
-		sendData("register success", strlen("register success"));
+		std::string cmd = MAKE_CMD(REGISTER, "success");
+		sendData(cmd.c_str(), cmd.length());
 	}
 
 	m_xmlParser->Clear();
