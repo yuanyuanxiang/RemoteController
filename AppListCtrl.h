@@ -12,12 +12,6 @@ class CAppListCtrl : public CListCtrl
 
 	int m_nIndex;		// 当前选中行
 
-	CRITICAL_SECTION cs;
-
-	void Lock() { EnterCriticalSection(&cs); }
-
-	void Unlock() { LeaveCriticalSection(&cs); }
-
 public:
 	CAppListCtrl();
 	virtual ~CAppListCtrl();

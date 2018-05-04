@@ -42,7 +42,6 @@ CSocketServer::CSocketServer()
 	m_bIsListen = false;
 
 	memset(g_fd_ArrayC, 0, sizeof(g_fd_ArrayC));
-	InitializeCriticalSection(&m_cs);
 }
 
 /**
@@ -50,7 +49,6 @@ CSocketServer::CSocketServer()
 */
 CSocketServer::~CSocketServer()
 {
-	DeleteCriticalSection(&m_cs);
 }
 
 // 在调用完基类的初始化函数之后，Server开启监听Client连接请求的线程

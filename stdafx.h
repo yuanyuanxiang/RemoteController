@@ -35,13 +35,13 @@
 
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
+void LOCK(); // 进入主对话框的锁
 
+void UNLOCK(); // 离开主对话框的锁
 
+#define Lock LOCK
 
-
-
-
-
+#define Unlock UNLOCK
 
 #ifdef _UNICODE
 #if defined _M_IX86

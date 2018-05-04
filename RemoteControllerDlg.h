@@ -6,6 +6,7 @@
 #include "afxcmn.h"
 #include "AppListCtrl.h"
 #include "socket\SocketServer.h"
+#include "Resource.h"
 
 
 extern CSocketServer *g_pSocket;
@@ -28,7 +29,11 @@ public:
 	int m_nPort;				// Ip端口
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
-	CSocketServer *m_pServer;
+	CSocketServer *m_pServer;	// socket 服务端
+
+	CRITICAL_SECTION m_cs;
+	void g_Lock() { EnterCriticalSection(&m_cs); }
+	void g_Unlock() { LeaveCriticalSection(&m_cs); }
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
@@ -61,3 +66,5 @@ public:
 	afx_msg void OnUpdate();
 	afx_msg void OnSettime();
 };
+
+extern CRemoteControllerDlg *g_MainDlg;

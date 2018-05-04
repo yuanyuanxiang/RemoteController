@@ -30,13 +30,11 @@ CAppListCtrl::CAppListCtrl()
 {
 	m_nIndex = -1;
 	g_pList = this;
-	InitializeCriticalSection(&cs);
 }
 
 
 CAppListCtrl::~CAppListCtrl()
 {
-	DeleteCriticalSection(&cs);
 }
 
 
@@ -178,7 +176,7 @@ void CAppListCtrl::DeleteAppItem(CSocketClient *client)
 
 void CAppListCtrl::RestartApp()
 {
-	if (-1 != m_nIndex)
+	if (-1 != m_nIndex && IDYES == MessageBox(_T("确定\"重启\"此程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
 		TRACE("======> RestartApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
@@ -244,7 +242,7 @@ void CAppListCtrl::OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CAppListCtrl::StopApp()
 {
-	if (-1 != m_nIndex)
+	if (-1 != m_nIndex && IDYES == MessageBox(_T("确定\"停止\"此程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
 		TRACE("======> StopApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
@@ -268,7 +266,7 @@ void CAppListCtrl::StartApp()
 
 void CAppListCtrl::UpdateApp()
 {
-	if (-1 != m_nIndex)
+	if (-1 != m_nIndex && IDYES == MessageBox(_T("确定\"升级\"此程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
 		TRACE("======> UpdateApp index = %d\n", m_nIndex);
 		USES_CONVERSION;

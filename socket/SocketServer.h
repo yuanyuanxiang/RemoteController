@@ -51,12 +51,6 @@ private:
 	bool m_bExit;		/**< 是否退出程序 */
 	bool m_bIsListen;	/**< 是否开启监听线程 */
 
-	CRITICAL_SECTION m_cs;
-
-	void Lock() { EnterCriticalSection(&m_cs); }
-
-	void Unlock() { LeaveCriticalSection(&m_cs); }
-
 	/// 只针对server端，监听数据
 	int CheckIO();
 	/// 检查是否有新连接(仅限server)

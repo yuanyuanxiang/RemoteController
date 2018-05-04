@@ -50,6 +50,8 @@ const int g_Width[COLUMNS] = {
 // Socket服务端
 CSocketServer *g_pSocket = NULL;
 
+CRemoteControllerDlg *g_MainDlg = NULL;
+
 const char* GetLocalHost()
 {
 	static char localhost[128] = { "127.0.0.1" };
@@ -107,12 +109,14 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 
 	m_pServer = NULL;
 	m_bAdvanced = false;
+	InitializeCriticalSection(&m_cs);
 }
 
 
 CRemoteControllerDlg::~CRemoteControllerDlg()
 {
 	WSACleanup();
+	DeleteCriticalSection(&m_cs);
 }
 
 
@@ -203,6 +207,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	g_pSocket = m_pServer;
 
 	m_bAdvanced = GetPrivateProfileIntA("settings", "advanced", 0, m_strConf);
+	CRemoteControllerDlg *g_MainDlg = this;
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -473,16 +478,22 @@ void CRemoteControllerDlg::OnUpdateRefreshAll(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnUpdate()
 {
-	g_pSocket->SendCommand(UPDATE);
+	if (IDYES == MessageBox(_T("确定\"升级\"守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	{
+		g_pSocket->SendCommand(UPDATE);
+	}
 }
 
 
 void CRemoteControllerDlg::OnSettime()
 {
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	char buf[64];
-	sprintf_s(buf, "settime:%d,%d,%d,%d,%d,%d,%d,%d", st.wYear, st.wMonth, st.wDayOfWeek, 
-		st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-	g_pSocket->SendCommand(buf);
+	if (IDYES == MessageBox(_T("确定\"同步\"所有时间吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	{
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		char buf[64];
+		sprintf_s(buf, "settime:%d,%d,%d,%d,%d,%d,%d,%d", st.wYear, st.wMonth, st.wDayOfWeek, 
+			st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		g_pSocket->SendCommand(buf);
+	}
 }
