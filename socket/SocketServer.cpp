@@ -2,6 +2,7 @@
 #include <iostream>
 #include "SocketServer.h"   
 #include "SocketClient.h"
+#include <vector>
 
 #ifndef USING_LOG
 #define MY_LOG(pStr)	std::cout << pStr << std::endl
@@ -102,7 +103,7 @@ void CSocketServer::SendCommand(const char *msg, const char *id)
 	Lock();
 	for (int i = 0; i < MAX_LISTEN; ++i)
 	{
-		if (g_fd_ArrayC[i])
+		if (g_fd_ArrayC[i] && g_fd_ArrayC[i]->IsAlive())
 		{
 			if (id)
 			{
@@ -121,21 +122,37 @@ void CSocketServer::SendCommand(const char *msg, const char *id)
 }
 
 
-void CSocketServer::DeleteAppItem(CSocketClient *client)
+// 是否在容器中已存在该IP
+bool IsExist(const std::string &ip, const std::vector<std::string> &v)
 {
-	Lock();
-	if (!m_bExit)
-		g_pList->DeleteAppItem(client);
-	client->SetExit();
-	Unlock();
+	for (std::vector<std::string>::const_iterator p = v.begin(); p != v.end(); ++p)
+		if (*p == ip)
+			return true;
+	return false;
 }
 
 
-void CSocketServer::UpdateAppItem(CSocketClient *client, const AppInfo &it)
+void CSocketServer::ControlDevice( const char *msg )
 {
+	// 先停止所有程序
+	if (0 == strcmp(msg, SHUTDOWN) || 0 == strcmp(msg, REBOOT))
+		SendCommand("stop");
+	TRACE("======> ControlDevice: %s\n", msg);
+	std::vector<std::string> v_ip;
 	Lock();
-	if (!m_bExit)
-		g_pList->UpdateAppItem(client, it);
+	for (int i = 0; i < MAX_LISTEN; ++i)
+	{
+		if (g_fd_ArrayC[i] && g_fd_ArrayC[i]->IsAlive())
+		{
+			std::string ip = g_fd_ArrayC[i]->GetIp();
+			if (false == IsExist(ip, v_ip))
+			{
+				v_ip.push_back(ip);
+				g_fd_ArrayC[i]->sendData(msg, strlen(msg));
+				TRACE("======> ControlDevice: %s OK\n", ip.c_str());
+			}
+		}
+	}
 	Unlock();
 }
 
@@ -184,28 +201,13 @@ int CSocketServer::CheckIO()
 		}
 		bool bFull = false;
 		/// 新的连接可以使用，查看待决处理队列
-		Lock();
-		for (int nLoopi = 0; nLoopi < MAX_LISTEN; ++nLoopi)
+		int idx = GetAvailabeClient();
+		if (idx >= 0)
 		{
-			if (0 == g_fd_ArrayC[nLoopi] || !g_fd_ArrayC[nLoopi]->IsAlive())
-			{
-				/// 添加新的可用连接
-				bFull = false;
-				if (g_fd_ArrayC[nLoopi])
-				{
-					g_pList->DeleteAppItem(g_fd_ArrayC[nLoopi]);
-					g_fd_ArrayC[nLoopi]->unInit();
-					g_fd_ArrayC[nLoopi]->Destroy();
-					g_fd_ArrayC[nLoopi] = NULL;
-				}
-				g_fd_ArrayC[nLoopi] = new CSocketClient(m_Socket, 
-					inet_ntoa(addrClient.sin_addr), ntohs(addrClient.sin_port));
-				g_pList->InsertAppItem(g_fd_ArrayC[nLoopi]);
-				break;
-			}
-		}
-		Unlock();
-		if (bFull)
+			g_fd_ArrayC[idx] = new CSocketClient(m_Socket, 
+				inet_ntoa(addrClient.sin_addr), ntohs(addrClient.sin_port));
+			g_pList->InsertAppItem(g_fd_ArrayC[idx]->GetNo());
+		}else
 		{
 			char str[128];
 			sprintf(str, "CSocketServer服务器端连接数已满（未接受%d）.\n", m_Socket);
@@ -215,4 +217,29 @@ int CSocketServer::CheckIO()
 		}
 	}//if (FD_ISSET(sListen, &fdRead))
 	return _NO__ERROR;
+}
+
+
+// 获得处于可用或者处于空闲状态的Client
+int CSocketServer::GetAvailabeClient()
+{
+	int idx = -1;
+	Lock();
+	for (int nLoopi = 0; nLoopi < MAX_LISTEN; ++nLoopi)
+	{
+		if (0 == g_fd_ArrayC[nLoopi] || !g_fd_ArrayC[nLoopi]->IsAlive())
+		{
+			if (g_fd_ArrayC[nLoopi])
+			{
+				g_pList->DeleteAppItem(g_fd_ArrayC[nLoopi]->GetNo());
+				g_fd_ArrayC[nLoopi]->unInit();
+				g_fd_ArrayC[nLoopi]->Destroy();
+				g_fd_ArrayC[nLoopi] = NULL;
+			}
+			idx = nLoopi;
+			break;
+		}
+	}
+	Unlock();
+	return idx;
 }

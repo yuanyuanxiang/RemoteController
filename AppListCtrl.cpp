@@ -76,16 +76,18 @@ void CAppListCtrl::OnNMRClick(NMHDR *pNMHDR, LRESULT *pResult)
 		CMenu* popup = menu.GetSubMenu(0);
 		ASSERT(popup != NULL);
 		popup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+		Lock();
 		// 下面的两行代码主要是为了后面的操作为准备的
 		// 获取列表视图控件中第一个被选择项的位置
 		POSITION m_pstion = GetFirstSelectedItemPosition();
 		//该函数获取由pos指定的列表项的索引，然后将pos设置为下一个位置的POSITION值
 		m_nIndex = GetNextSelectedItem(m_pstion);
+		Unlock();
 	}
 }
 
 
-void CAppListCtrl::UpdateAppItem(CSocketClient *client, const AppInfo &it)
+void CAppListCtrl::UpdateAppItem(const char* port, const AppInfo &it)
 {
 	USES_CONVERSION;
 	Lock();
@@ -93,8 +95,9 @@ void CAppListCtrl::UpdateAppItem(CSocketClient *client, const AppInfo &it)
 	for(int row = 0; row < n; ++row)
 	{
 		CString no = GetItemText(row, _no);
-		if (0 == strcmp(client->GetNo(), W2A(no)))
+		if (0 == strcmp(port, W2A(no)))
 		{
+			SetItemText(row, _ip, A2W(it.ip));
 			SetItemText(row, _name, A2W(it.name));
 			SetItemText(row, _cpu, A2W(it.cpu));
 			SetItemText(row, _mem, A2W(it.mem));
@@ -105,6 +108,7 @@ void CAppListCtrl::UpdateAppItem(CSocketClient *client, const AppInfo &it)
 			SetItemText(row, _create_time, A2W(it.create_time));
 			SetItemText(row, _mod_time, A2W(it.mod_time));
 			SetItemText(row, _version, A2W(it.version));
+			SetItemText(row, _keep_ver, A2W(it.keep_ver));
 			SetItemText(row, _cmd_line, A2W(it.cmd_line));
 			break;
 		}
@@ -115,10 +119,12 @@ void CAppListCtrl::UpdateAppItem(CSocketClient *client, const AppInfo &it)
 
 void CAppListCtrl::AvgColumnWidth(int cols)
 {
+	Lock();
 	for (int i = 0; i < cols; ++i)
 	{
 		SetColumnWidth(i, g_Width[i]);
 	}
+	Unlock();
 }
 
 
@@ -134,7 +140,7 @@ void CAppListCtrl::Clear()
 }
 
 
-void CAppListCtrl::InsertAppItem(CSocketClient *client)
+void CAppListCtrl::InsertAppItem(const char* port)
 {
 	USES_CONVERSION;
 	Lock();
@@ -142,13 +148,12 @@ void CAppListCtrl::InsertAppItem(CSocketClient *client)
 	CString s;
 	s.Format(_T("%d"), n+1);
 	InsertItem(n, s);
-	SetItemText(n, _no, A2W(client->GetNo()));
-	SetItemText(n, _ip, A2W(client->GetIp()));
+	SetItemText(n, _no, A2W(port));
 	Unlock();
 }
 
 
-void CAppListCtrl::DeleteAppItem(CSocketClient *client)
+void CAppListCtrl::DeleteAppItem(const char* port)
 {
 	USES_CONVERSION;
 	Lock();
@@ -156,7 +161,7 @@ void CAppListCtrl::DeleteAppItem(CSocketClient *client)
 	for(int row = 0; row < n; ++row)
 	{
 		CString no = GetItemText(row, _no);
-		if (0 == strcmp(client->GetNo(), W2A(no)))
+		if (0 == strcmp(port, W2A(no)))
 		{
 			DeleteItem(row);
 			// 后面需要重排序
@@ -180,7 +185,9 @@ void CAppListCtrl::RestartApp()
 	{
 		TRACE("======> RestartApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		Unlock();
 		g_pSocket->SendCommand(RESTART, W2A(no));
 	}
 }
@@ -192,7 +199,9 @@ void CAppListCtrl::QueryAppInfo()
 	{
 		TRACE("======> QueryAppInfo index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		Unlock();
 		g_pSocket->SendCommand(REFRESH, W2A(no));
 	}
 }
@@ -203,7 +212,7 @@ int CALLBACK comp(LPARAM p1, LPARAM p2, LPARAM s)
 {
 	int row1 = (int) p1;
 	int row2 = (int) p2;
-	CAppListCtrl *lc = (CAppListCtrl*)s;
+	const CAppListCtrl *lc = (CAppListCtrl*)s;
 	CString lps1 = lc->GetItemText(row1, sort_col);
 	CString lps2 = lc->GetItemText(row2, sort_col);
 	if (sort_col < _ip || (_name < sort_col && sort_col < _create_time))
@@ -246,7 +255,9 @@ void CAppListCtrl::StopApp()
 	{
 		TRACE("======> StopApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		Unlock();
 		g_pSocket->SendCommand(STOP, W2A(no));
 	}
 }
@@ -258,7 +269,9 @@ void CAppListCtrl::StartApp()
 	{
 		TRACE("======> StartApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		Unlock();
 		g_pSocket->SendCommand(START, W2A(no));
 	}
 }
@@ -270,7 +283,9 @@ void CAppListCtrl::UpdateApp()
 	{
 		TRACE("======> UpdateApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		Unlock();
 		std::string cmd = MAKE_CMD(UPDATE, "a");
 		g_pSocket->SendCommand(cmd.c_str(), W2A(no));
 	}

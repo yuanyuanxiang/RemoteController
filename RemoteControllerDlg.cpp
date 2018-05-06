@@ -27,11 +27,13 @@ const CString items[COLUMNS] = {
 	_T("创建日期"),
 	_T("修改日期"),
 	_T("版本"), 
+	_T("守护程序"), 
 	_T("位置")
 };
 
+// 每列宽度
 const int g_Width[COLUMNS] = {
-	60, // 序号
+	55, // 序号
 	80, // 端口
 	130, // IP
 	200, // 名称
@@ -41,10 +43,11 @@ const int g_Width[COLUMNS] = {
 	80, // 句柄
 	100, // 运行时长
 	80, // 启动次数
-	160, // 创建日期
-	160, // 修改日期
+	155, // 创建日期
+	155, // 修改日期
 	80, // 版本
-	500,// 位置
+	80, // 守护程序版本
+	600,// 位置
 };
 
 // Socket服务端
@@ -145,6 +148,10 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_REFRESH_ALL, &CRemoteControllerDlg::OnUpdateRefreshAll)
 	ON_COMMAND(ID_UPDATE, &CRemoteControllerDlg::OnUpdate)
 	ON_COMMAND(ID_SETTIME, &CRemoteControllerDlg::OnSettime)
+	ON_COMMAND(ID_STOPALL, &CRemoteControllerDlg::OnStopall)
+	ON_UPDATE_COMMAND_UI(ID_STOPALL, &CRemoteControllerDlg::OnUpdateStopall)
+	ON_COMMAND(ID_STARTALL, &CRemoteControllerDlg::OnStartall)
+	ON_UPDATE_COMMAND_UI(ID_STARTALL, &CRemoteControllerDlg::OnUpdateStartall)
 END_MESSAGE_MAP()
 
 
@@ -325,7 +332,7 @@ void CRemoteControllerDlg::OnPoweroffAll()
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
-		g_pSocket->SendCommand(SHUTDOWN);
+		g_pSocket->ControlDevice(SHUTDOWN);
 }
 
 
@@ -460,7 +467,7 @@ void CRemoteControllerDlg::OnRebootSystem()
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
-		g_pSocket->SendCommand(REBOOT);
+		g_pSocket->ControlDevice(REBOOT);
 }
 
 
@@ -494,6 +501,39 @@ void CRemoteControllerDlg::OnSettime()
 		char buf[64];
 		sprintf_s(buf, "settime:%d,%d,%d,%d,%d,%d,%d,%d", st.wYear, st.wMonth, st.wDayOfWeek, 
 			st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		g_pSocket->SendCommand(buf);
+		g_pSocket->ControlDevice(buf);
 	}
+}
+
+
+void CRemoteControllerDlg::OnStopall()
+{
+	int i = 0, nRet = 0;
+	do 
+	{
+		nRet = MessageBox(_T("点击\"确定\"将停止所有程序! 盼三思而后行!"), 
+			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
+	} while (IDYES == nRet && ++i < 3);
+	if (3 == i)
+		g_pSocket->SendCommand(STOP);
+}
+
+
+void CRemoteControllerDlg::OnUpdateStopall(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_bAdvanced && m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnStartall()
+{
+	if(IDYES == MessageBox(_T("点击\"确定\"将启动所有程序!"), 
+			_T("提示"), MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2))
+		g_pSocket->SendCommand(START);
+}
+
+
+void CRemoteControllerDlg::OnUpdateStartall(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_bAdvanced && m_ListApps.GetItemCount());
 }

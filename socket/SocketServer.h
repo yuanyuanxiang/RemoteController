@@ -41,11 +41,8 @@ public:
 	// 向APP发送消息[id==NULL表示全部]
 	void SendCommand(const char *msg, const char *id = NULL);
 
-	// 删除表格中的一行
-	void DeleteAppItem(CSocketClient *client);
-
-	// 更新表格中的一行
-	void UpdateAppItem(CSocketClient *client, const AppInfo &it);
+	// 控制硬件设备：关闭/重启/时间同步
+	void ControlDevice(const char *msg);
 
 private:
 	bool m_bExit;		/**< 是否退出程序 */
@@ -53,6 +50,8 @@ private:
 
 	/// 只针对server端，监听数据
 	int CheckIO();
+	// 获取可用的Client
+	int GetAvailabeClient();
 	/// 检查是否有新连接(仅限server)
 	static UINT WINAPI CheckIOThread(LPVOID param);
 

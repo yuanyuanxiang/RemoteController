@@ -9,7 +9,7 @@
 #define VC_EXTRALEAN            // 从 Windows 头中排除极少使用的资料
 #endif
 
-#include "vld.h"
+//#include "vld.h"
 
 #include "targetver.h"
 

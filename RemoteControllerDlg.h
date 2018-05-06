@@ -65,6 +65,10 @@ public:
 	afx_msg void OnUpdateRefreshAll(CCmdUI *pCmdUI);
 	afx_msg void OnUpdate();
 	afx_msg void OnSettime();
+	afx_msg void OnStopall();
+	afx_msg void OnUpdateStopall(CCmdUI *pCmdUI);
+	afx_msg void OnStartall();
+	afx_msg void OnUpdateStartall(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

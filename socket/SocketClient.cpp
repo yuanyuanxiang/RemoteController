@@ -12,7 +12,7 @@
 #else
 #endif
 
-extern CSocketServer *g_pSocket;
+extern CAppListCtrl *g_pList;
 
 #ifndef BUFFER_LENGTH
 	#define BUFFER_LENGTH 4096
@@ -103,7 +103,7 @@ void CSocketClient::Disconnect()
 {
 	char str[256];
 	sprintf(str, "Socket¿Í»§¶Ë: [%d] %s:%d ¹Ø±Õ.\n", m_Socket, m_chToIp, m_nToport);
-	g_pSocket->DeleteAppItem(this);
+	g_pList->DeleteAppItem(m_strPort);
 	OutputDebugStringA(str);
 	m_bExit = true;
 	m_bAlive = false;
@@ -131,6 +131,7 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 	<szCreateTime>%s</szCreateTime>
 	<szModTime>%s</szModTime>
 	<szVersion>%s</szVersion>
+	<szKeeperVer>%s</szKeeperVer>
 	<szCmdLine>%s</szCmdLine>
 </parameters>
 </request>
@@ -167,6 +168,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 	if (0 == strcmp("KeepAlive", cmdType))
 	{
 		AppInfo item;
+		strcpy_s(item.ip, m_chToIp);
 		strcpy_s(item.name, GetValue(parameters, "szName"));
 		strcpy_s(item.cpu, GetValue(parameters, "szCpu"));
 		strcpy_s(item.mem, GetValue(parameters, "szMem"));
@@ -177,8 +179,9 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.create_time, GetValue(parameters, "szCreateTime"));
 		strcpy_s(item.mod_time, GetValue(parameters, "szModTime"));
 		strcpy_s(item.version, GetValue(parameters, "szVersion"));
+		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
-		g_pSocket->UpdateAppItem(this, item);
+		g_pList->UpdateAppItem(m_strPort, item);
 		sendData(KEEPALIVE, strlen(KEEPALIVE));
 	}else if(0 == strcmp("Register", cmdType))
 	{

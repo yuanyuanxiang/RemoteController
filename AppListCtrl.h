@@ -20,13 +20,13 @@ public:
 	void AddColumns(const CString its[], int cols);
 
 	// 插入行
-	void InsertAppItem(CSocketClient *client);
+	void InsertAppItem(const char* port);
 
 	// 删除行
-	void DeleteAppItem(CSocketClient *client);
+	void DeleteAppItem(const char* port);
 
 	// 更新行
-	void UpdateAppItem(CSocketClient *client, const AppInfo &it);
+	void UpdateAppItem(const char* port, const AppInfo &it);
 
 	// 平均分布各列
 	void AvgColumnWidth(int cols);
