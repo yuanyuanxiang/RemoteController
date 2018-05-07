@@ -26,6 +26,7 @@ const CString items[COLUMNS] = {
 	_T("启动次数"), 
 	_T("创建日期"),
 	_T("修改日期"),
+	_T("大小"),
 	_T("版本"), 
 	_T("守护程序"), 
 	_T("位置")
@@ -45,6 +46,7 @@ const int g_Width[COLUMNS] = {
 	80, // 启动次数
 	155, // 创建日期
 	155, // 修改日期
+	100, // 文件大小
 	80, // 版本
 	80, // 守护程序版本
 	600,// 位置
@@ -214,7 +216,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	g_pSocket = m_pServer;
 
 	m_bAdvanced = GetPrivateProfileIntA("settings", "advanced", 0, m_strConf);
-	CRemoteControllerDlg *g_MainDlg = this;
+	g_MainDlg = this;
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -274,12 +276,19 @@ void CRemoteControllerDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 
+	// 使全局Lock/Unlock无效
+	g_Lock();
+	g_MainDlg = NULL;
+	g_Unlock();
+
+	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
 	if (NULL != m_pServer)
 	{
 		m_pServer->unInit();
 		delete m_pServer;
 		m_pServer = NULL;
 	}
+	OutputDebugStringA("======> CRemoteControllerDlg end OnDestroy()\n");
 }
 
 

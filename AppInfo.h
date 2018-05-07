@@ -16,6 +16,7 @@ enum _Column
 	_runtime,	// 启动次数
 	_create_time, // 创建日期
 	_mod_time,	// 修改日期
+	_file_size, // 文件大小
 	_version,	// 版本
 	_keep_ver,  // 守护程序版本
 	_cmd_line,	// 命令行
@@ -36,6 +37,7 @@ public:
 	char run_times[64];	// 重启次数
 	char create_time[64];// 创建时间
 	char mod_time[64];	// 修改日期
+	char file_size[64]; // 文件大小
 	char version[64];	// 版本
 	char keep_ver[64];	// 守护程序版本
 	char cmd_line[_MAX_PATH]; // 命令行

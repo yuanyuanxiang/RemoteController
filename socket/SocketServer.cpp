@@ -110,11 +110,13 @@ void CSocketServer::SendCommand(const char *msg, const char *id)
 				if(0 == strcmp(id, g_fd_ArrayC[i]->GetNo()))
 				{
 					g_fd_ArrayC[i]->sendData(msg, strlen(msg));
+					TRACE("======> SendCommand: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
 					break;
 				}
 			}else
 			{
 				g_fd_ArrayC[i]->sendData(msg, strlen(msg));
+				TRACE("======> SendCommand: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
 			}
 		}
 	}
@@ -136,7 +138,10 @@ void CSocketServer::ControlDevice( const char *msg )
 {
 	// 先停止所有程序
 	if (0 == strcmp(msg, SHUTDOWN) || 0 == strcmp(msg, REBOOT))
+	{
 		SendCommand("stop");
+		Sleep(300);//发送太快了，处理不过来
+	}
 	TRACE("======> ControlDevice: %s\n", msg);
 	std::vector<std::string> v_ip;
 	Lock();

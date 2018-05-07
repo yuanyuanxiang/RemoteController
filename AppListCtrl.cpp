@@ -107,6 +107,7 @@ void CAppListCtrl::UpdateAppItem(const char* port, const AppInfo &it)
 			SetItemText(row, _runtime, A2W(it.run_times));
 			SetItemText(row, _create_time, A2W(it.create_time));
 			SetItemText(row, _mod_time, A2W(it.mod_time));
+			SetItemText(row, _file_size, A2W(it.file_size));
 			SetItemText(row, _version, A2W(it.version));
 			SetItemText(row, _keep_ver, A2W(it.keep_ver));
 			SetItemText(row, _cmd_line, A2W(it.cmd_line));
@@ -215,7 +216,7 @@ int CALLBACK comp(LPARAM p1, LPARAM p2, LPARAM s)
 	const CAppListCtrl *lc = (CAppListCtrl*)s;
 	CString lps1 = lc->GetItemText(row1, sort_col);
 	CString lps2 = lc->GetItemText(row2, sort_col);
-	if (sort_col < _ip || (_name < sort_col && sort_col < _create_time))
+	if (sort_col < _ip || (_name < sort_col && sort_col < _create_time) || sort_col == _file_size)
 	{
 		USES_CONVERSION;
 		double d1 = atof(W2A(lps1)), d2 = atof(W2A(lps2));

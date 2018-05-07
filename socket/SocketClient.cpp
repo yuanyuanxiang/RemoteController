@@ -130,6 +130,7 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 	<szRunTimes>%d</szRunTimes>
 	<szCreateTime>%s</szCreateTime>
 	<szModTime>%s</szModTime>
+	<szFileSize>%.2fM</szFileSize>
 	<szVersion>%s</szVersion>
 	<szKeeperVer>%s</szKeeperVer>
 	<szCmdLine>%s</szCmdLine>
@@ -178,6 +179,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.run_times, GetValue(parameters, "szRunTimes"));
 		strcpy_s(item.create_time, GetValue(parameters, "szCreateTime"));
 		strcpy_s(item.mod_time, GetValue(parameters, "szModTime"));
+		strcpy_s(item.file_size, GetValue(parameters, "szFileSize"));
 		strcpy_s(item.version, GetValue(parameters, "szVersion"));
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
