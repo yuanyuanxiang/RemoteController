@@ -44,6 +44,12 @@ public:
 	// 控制硬件设备：关闭/重启/时间同步
 	void ControlDevice(const char *msg);
 
+	CRITICAL_SECTION m_cs;
+
+	void Lock() { EnterCriticalSection(&m_cs); }
+
+	void Unlock() { LeaveCriticalSection(&m_cs); }
+
 private:
 	bool m_bExit;		/**< 是否退出程序 */
 	bool m_bIsListen;	/**< 是否开启监听线程 */

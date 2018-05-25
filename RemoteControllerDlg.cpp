@@ -115,6 +115,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 	m_pServer = NULL;
 	m_bAdvanced = false;
 	InitializeCriticalSection(&m_cs);
+	g_MainDlg = this;
 }
 
 
@@ -154,6 +155,10 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_STOPALL, &CRemoteControllerDlg::OnUpdateStopall)
 	ON_COMMAND(ID_STARTALL, &CRemoteControllerDlg::OnStartall)
 	ON_UPDATE_COMMAND_UI(ID_STARTALL, &CRemoteControllerDlg::OnUpdateStartall)
+	ON_COMMAND(ID_UPDATE_SINGLE, &CRemoteControllerDlg::OnUpdateSingle)
+	ON_UPDATE_COMMAND_UI(ID_SETTIME, &CRemoteControllerDlg::OnUpdateSettime)
+	ON_UPDATE_COMMAND_UI(ID_UPDATE, &CRemoteControllerDlg::OnUpdateUpdate)
+	ON_UPDATE_COMMAND_UI(ID_UPDATE_SINGLE, &CRemoteControllerDlg::OnUpdateUpdateSingle)
 END_MESSAGE_MAP()
 
 
@@ -188,7 +193,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	ShowWindow(SW_SHOW);
+	ShowWindow(SW_SHOWMAXIMIZED);
 
 	// 为列表视图控件添加全行选中和栅格风格
 	m_ListApps.SetExtendedStyle(m_ListApps.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
@@ -216,7 +221,6 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	g_pSocket = m_pServer;
 
 	m_bAdvanced = GetPrivateProfileIntA("settings", "advanced", 0, m_strConf);
-	g_MainDlg = this;
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -275,11 +279,6 @@ HCURSOR CRemoteControllerDlg::OnQueryDragIcon()
 void CRemoteControllerDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
-
-	// 使全局Lock/Unlock无效
-	g_Lock();
-	g_MainDlg = NULL;
-	g_Unlock();
 
 	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
 	if (NULL != m_pServer)
@@ -545,4 +544,38 @@ void CRemoteControllerDlg::OnStartall()
 void CRemoteControllerDlg::OnUpdateStartall(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_bAdvanced && m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnUpdateSingle()
+{
+	if (IDYES == MessageBox(_T("确定\"升级\"守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	{
+		POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+		while (pos)
+		{
+			int nRow = m_ListApps.GetNextSelectedItem(pos);
+			CString no = m_ListApps.GetItemText(nRow, _no);
+			USES_CONVERSION;
+			g_pSocket->SendCommand(UPDATE, W2A(no));
+		}
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateSettime(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnUpdateUpdate(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnUpdateUpdateSingle(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

@@ -32,8 +32,8 @@ public:
 	CSocketServer *m_pServer;	// socket 服务端
 
 	CRITICAL_SECTION m_cs;
-	void g_Lock() { EnterCriticalSection(&m_cs); }
-	void g_Unlock() { LeaveCriticalSection(&m_cs); }
+	void Lock() { EnterCriticalSection(&m_cs); }
+	void Unlock() { LeaveCriticalSection(&m_cs); }
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
@@ -69,6 +69,10 @@ public:
 	afx_msg void OnUpdateStopall(CCmdUI *pCmdUI);
 	afx_msg void OnStartall();
 	afx_msg void OnUpdateStartall(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateSingle();
+	afx_msg void OnUpdateSettime(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateUpdate(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateUpdateSingle(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

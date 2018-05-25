@@ -16,22 +16,32 @@ public:
 	CAppListCtrl();
 	virtual ~CAppListCtrl();
 
-	// 增加列
+	// 初始化所有列
 	void AddColumns(const CString its[], int cols);
-
-	// 插入行
-	void InsertAppItem(const char* port);
-
-	// 删除行
-	void DeleteAppItem(const char* port);
-
-	// 更新行
-	void UpdateAppItem(const char* port, const AppInfo &it);
 
 	// 平均分布各列
 	void AvgColumnWidth(int cols);
 
+	//////////////////////////////////////////////////////////////////////////
+	// 以下4个函数涉及多线程
+
+	// 插入行[m]
+	void InsertAppItem(const char* port);
+
+	// 删除行[m]
+	void DeleteAppItem(const char* port);
+
+	// 更新行[m]
+	void UpdateAppItem(const char* port, const AppInfo &it);
+
+	// 清空所有行[m]
 	void Clear();
+
+	CRITICAL_SECTION m_cs;
+
+	void Lock() { EnterCriticalSection(&m_cs); }
+
+	void Unlock() { LeaveCriticalSection(&m_cs); }
 
 protected:
 	DECLARE_MESSAGE_MAP()

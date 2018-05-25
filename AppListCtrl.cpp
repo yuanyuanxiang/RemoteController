@@ -30,11 +30,13 @@ CAppListCtrl::CAppListCtrl()
 {
 	m_nIndex = -1;
 	g_pList = this;
+	InitializeCriticalSection(&m_cs);
 }
 
 
 CAppListCtrl::~CAppListCtrl()
 {
+	DeleteCriticalSection(&m_cs);
 }
 
 
