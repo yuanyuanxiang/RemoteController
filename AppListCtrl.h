@@ -4,6 +4,19 @@
 #include "AppInfo.h"
 #include "cmdList.h"
 
+// 用户自定义消息
+enum UserMsg
+{
+	MSG_InsertApp = (WM_USER + 100), 
+	MSG_UpdateApp, 
+	MSG_DeleteApp, 
+	MSG_ChangeColor, 
+};
+
+#define COLOR_DEFAULT 0		//默认字体颜色
+#define COLOR_RED 2048		// 红色字体
+#define COLOR_YELLOW 2049	// 黄色字体
+
 // CAppListCtrl
 
 class CAppListCtrl : public CListCtrl
@@ -39,9 +52,11 @@ public:
 
 	CRITICAL_SECTION m_cs;
 
-	void Lock() { EnterCriticalSection(&m_cs); }
+	inline void Lock() { EnterCriticalSection(&m_cs); }
 
-	void Unlock() { LeaveCriticalSection(&m_cs); }
+	inline void Unlock() { LeaveCriticalSection(&m_cs); }
+
+	std::string getCurSelNo();
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -53,4 +68,9 @@ public:
 	afx_msg void StopApp();
 	afx_msg void StartApp();
 	afx_msg void UpdateApp();
+	afx_msg LRESULT MessageInsertApp(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT MessageUpdateApp(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT MessageDeleteApp(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT MessageChangeColor(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult);
 };

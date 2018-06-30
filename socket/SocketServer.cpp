@@ -26,7 +26,7 @@ UINT WINAPI CSocketServer::CheckIOThread(LPVOID param)
 	OutputDebugStringA("CSocketServer CheckIOThread Start.\n");
 	while (!pThis->m_bExit)
 	{
-		Sleep(10);
+		Sleep(20);
 		pThis->CheckIO();
 	}
 	pThis->m_bIsListen = false;
@@ -77,24 +77,27 @@ void CSocketServer::unInit()
 	while (m_bIsListen)
 		Sleep(10);
 
+	CSocketClient *buf[MAX_LISTEN] = { 0 };
+
 	Lock();
 	for (int i = 0; i < MAX_LISTEN; ++i)
 	{
 		if (g_fd_ArrayC[i])
 		{
 			g_fd_ArrayC[i]->SetExit();
-		}
-	}
-	for (int i = 0; i < MAX_LISTEN; ++i)
-	{
-		if (g_fd_ArrayC[i])
-		{
-			g_fd_ArrayC[i]->unInit();
-			g_fd_ArrayC[i]->Destroy();
+			buf[i] = g_fd_ArrayC[i];
 			g_fd_ArrayC[i] = NULL;
 		}
 	}
 	Unlock();
+	for (int i = 0; i < MAX_LISTEN; ++i)
+	{
+		if (buf[i])
+		{
+			buf[i]->unInit();
+			buf[i]->Destroy();
+		}
+	}
 
 	CSocketBase::unInit();
 }
@@ -127,6 +130,41 @@ void CSocketServer::SendCommand(const char *msg, const char *id)
 }
 
 
+void CSocketServer::SetAliveTime(int msg, const char *id)
+{
+	TRACE("======> SetAliveTime[%s]: %d\n", id ? id : "ALL", msg);
+	Lock();
+	for (int i = 0; i < MAX_LISTEN; ++i)
+	{
+		if (g_fd_ArrayC[i] && g_fd_ArrayC[i]->IsAlive())
+		{
+			if (id)
+			{
+				if(0 == strcmp(id, g_fd_ArrayC[i]->GetNo()))
+				{
+					char arg[64] = { 0 };
+					sprintf_s(arg, "%d", msg);
+					std::string cmd = MAKE_CMD(KEEPALIVE, arg);
+					g_fd_ArrayC[i]->SetAliveTime(msg);
+					g_fd_ArrayC[i]->sendData(cmd.c_str(), cmd.length());
+					TRACE("======> SetAliveTime: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
+					break;
+				}
+			}else
+			{
+				char arg[64] = { 0 };
+				sprintf_s(arg, "%d", msg);
+				std::string cmd = MAKE_CMD(KEEPALIVE, arg);
+				g_fd_ArrayC[i]->SetAliveTime(msg);
+				g_fd_ArrayC[i]->sendData(cmd.c_str(), cmd.length());
+				TRACE("======> SetAliveTime: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
+			}
+		}
+	}
+	Unlock();
+}
+
+
 // 是否在容器中已存在该IP
 bool IsExist(const std::string &ip, const std::vector<std::string> &v)
 {
@@ -139,13 +177,13 @@ bool IsExist(const std::string &ip, const std::vector<std::string> &v)
 
 void CSocketServer::ControlDevice( const char *msg )
 {
-	// 先停止所有程序
+	TRACE("======> ControlDevice: %s\n", msg);
+	// 如果是关机、重启，则先停止所有程序
 	if (0 == strcmp(msg, SHUTDOWN) || 0 == strcmp(msg, REBOOT))
 	{
-		SendCommand("stop");
-		Sleep(300);//发送太快了，处理不过来
+		SendCommand(STOP);
+		Sleep(3000);//发送太快了，处理不过来，先等待停止操作执行完毕
 	}
-	TRACE("======> ControlDevice: %s\n", msg);
 	std::vector<std::string> v_ip;
 	Lock();
 	for (int i = 0; i < MAX_LISTEN; ++i)
@@ -172,7 +210,7 @@ void CSocketServer::ControlDevice( const char *msg )
 int CSocketServer::CheckIO()
 {
 	assert(0 == m_nType);
-	timeval tv = {1, 0};
+	const timeval tv = {1, 0};
 	FD_ZERO(&fdRead);
 	FD_SET(m_SocketListen, &fdRead);
 	/// 调用select模式进行监听
@@ -214,7 +252,7 @@ int CSocketServer::CheckIO()
 		{
 			g_fd_ArrayC[idx] = new CSocketClient(m_Socket, 
 				inet_ntoa(addrClient.sin_addr), ntohs(addrClient.sin_port));
-			g_pList->InsertAppItem(g_fd_ArrayC[idx]->GetNo());
+			g_pList->PostMessage(MSG_InsertApp, g_fd_ArrayC[idx]->GetSrcPort());
 		}else
 		{
 			char str[128];
@@ -239,7 +277,7 @@ int CSocketServer::GetAvailabeClient()
 		{
 			if (g_fd_ArrayC[nLoopi])
 			{
-				g_pList->DeleteAppItem(g_fd_ArrayC[nLoopi]->GetNo());
+				g_pList->PostMessage(MSG_DeleteApp, g_fd_ArrayC[nLoopi]->GetSrcPort());
 				g_fd_ArrayC[nLoopi]->unInit();
 				g_fd_ArrayC[nLoopi]->Destroy();
 				g_fd_ArrayC[nLoopi] = NULL;

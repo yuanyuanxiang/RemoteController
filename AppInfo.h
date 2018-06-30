@@ -19,7 +19,7 @@ enum _Column
 	_file_size, // 文件大小
 	_version,	// 版本
 	_keep_ver,  // 守护程序版本
-	_cmd_line,	// 命令行
+	_cmd_line,	// 命令行（程序位置）
 	COLUMNS, 
 };
 
@@ -30,7 +30,7 @@ public:
 	char ip[64];		// IP
 	char name[64];		// 名称
 	char cpu[64];		// CPU
-	char mem[64];		// 内存
+	char mem[64];		// 内存（单位:M）
 	char threads[64];	// 线程数
 	char handles[64];	// 句柄数
 	char run_log[64];	// 运行时长
@@ -41,6 +41,7 @@ public:
 	char version[64];	// 版本
 	char keep_ver[64];	// 守护程序版本
 	char cmd_line[_MAX_PATH]; // 命令行
+	char status[64];	// 运行状态
 
 public:
 	AppInfo()

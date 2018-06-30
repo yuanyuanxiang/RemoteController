@@ -15,6 +15,7 @@
 #include "RingBuffer.h"
 #include "tinyxml\tinyxml.h"
 #include <vector>
+#include "..\AppInfo.h"
 
 /** 
 * @class	CSocketServer 
@@ -24,16 +25,19 @@
 class CSocketClient : public CSocketBase
 {
 private:
-	char m_strPort[64];		// 端口
+	char m_strSrcPort[64];	// 源端口
 	char m_strName[64];		// 名称
+	int m_nSrcPort;			// 源端口
 	bool m_bExit;			// 是否退出
 	bool m_bAlive;			// 是否保持着连接
 	bool m_bIsParsing;		// 解析线程是否开启
 	bool m_bIsReceiving;	// 收数据线程是否开启
+	int m_nAliveTime;		// 心跳周期（秒）
 
 	char *m_RecvBuffer;			// 收数据缓存
 	RingBuffer *m_RingBuffer;	// 缓存区
 	TiXmlDocument *m_xmlParser;
+	AppInfo item;				// AppInfo
 
 	static UINT WINAPI ParseThread(LPVOID param);
 	static UINT WINAPI ReceiveThread(LPVOID param);
@@ -66,11 +70,15 @@ public:
 	/// socket退出时进行清理工作
 	void unInit();
 
+	// 设置心跳周期
+	void SetAliveTime(int nAliveTime) { m_nAliveTime = nAliveTime; }
+
 	// 标记为将退出
 	void SetExit() { m_bExit = true; m_bAlive = false; }
 
 	/// 获取编号
-	const char* GetNo() const { return m_strPort; }
+	const char* GetNo() const { return m_strSrcPort; }
+	int GetSrcPort() const { return m_nSrcPort; }
 
 	/// 获取名称
 	const char* Name() const { return m_strName; }

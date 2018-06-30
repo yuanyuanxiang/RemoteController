@@ -25,7 +25,7 @@ UINT WINAPI CSocketClient::ParseThread(LPVOID param)
 	pThis->m_bIsParsing = true;
 	while (pThis->m_bAlive)
 	{
-		Sleep(10);
+		Sleep(50);
 		pThis->ParseData();
 	}
 	pThis->m_bIsParsing = false;
@@ -69,7 +69,9 @@ CSocketClient::CSocketClient(SOCKET client, const char *Ip, int port)
 	m_RingBuffer = new RingBuffer(2 * 1024 * 1024);
 	m_RecvBuffer = new char[BUFFER_LENGTH];
 	m_xmlParser = NULL;
-	sprintf_s(m_strPort, "%d", port);
+	m_nAliveTime = ALIVE_TIME;
+	m_nSrcPort = port;
+	sprintf_s(m_strSrcPort, "%d", port);
 	memset(m_strName, 0, 64);
 	_beginthreadex(NULL, 0, &ParseThread, this, 0, NULL);
 	_beginthreadex(NULL, 0, &ReceiveThread, this, 0, NULL);
@@ -93,7 +95,7 @@ void CSocketClient::unInit()
 	m_bExit = true;
 	m_bAlive = false;
 	while (m_bIsParsing || m_bIsReceiving)
-		Sleep(1);
+		Sleep(10);
 
 	CSocketBase::unInit();
 }
@@ -103,7 +105,7 @@ void CSocketClient::Disconnect()
 {
 	char str[256];
 	sprintf(str, "Socket客户端: [%d] %s:%d 关闭.\n", m_Socket, m_chToIp, m_nToport);
-	g_pList->DeleteAppItem(m_strPort);
+	g_pList->PostMessage(MSG_DeleteApp, m_nSrcPort);
 	OutputDebugStringA(str);
 	m_bExit = true;
 	m_bAlive = false;
@@ -119,8 +121,9 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 
 /**
 <?xml version="1.0" encoding="GB2312" standalone="yes"?>
-<request command="KeepAlive">
+<request command="keepAlive">
 <parameters>
+	<nAliveTime>%d</nAliveTime>
 	<szName>%s</szName>
 	<szCpu>%s</szCpu>
 	<szMem>%d</szMem>
@@ -134,6 +137,7 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 	<szVersion>%s</szVersion>
 	<szKeeperVer>%s</szKeeperVer>
 	<szCmdLine>%s</szCmdLine>
+	<szStatus>%s</szStatus>
 </parameters>
 </request>
 */
@@ -166,9 +170,10 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		m_xmlParser->Clear();
 		return;
 	}
-	if (0 == strcmp("KeepAlive", cmdType))
+	// 为了兼容以前的版本，保留了大写的"KeepAlive"
+	if (0 == strcmp(KEEPALIVE, cmdType) || 0 == strcmp("KeepAlive", cmdType))
 	{
-		AppInfo item;
+		int aliveTime = atoi(GetValue(parameters, "nAliveTime"));
 		strcpy_s(item.ip, m_chToIp);
 		strcpy_s(item.name, GetValue(parameters, "szName"));
 		strcpy_s(item.cpu, GetValue(parameters, "szCpu"));
@@ -181,15 +186,31 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.mod_time, GetValue(parameters, "szModTime"));
 		strcpy_s(item.file_size, GetValue(parameters, "szFileSize"));
 		strcpy_s(item.version, GetValue(parameters, "szVersion"));
+		if (0 == strcmp("", item.version)) strcpy_s(item.version, "无");
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
-		g_pList->UpdateAppItem(m_strPort, item);
-		sendData(KEEPALIVE, strlen(KEEPALIVE));
-	}else if(0 == strcmp("Register", cmdType))
+		const char *status = GetValue(parameters, "szStatus");
+		if (strcmp(item.status, status))
+		{
+			strcpy_s(item.status, status);
+			g_pList->PostMessage(MSG_ChangeColor, m_nSrcPort, 
+				strcmp("异常", item.status) ? ( strcmp("未检测", item.status) 
+				? COLOR_DEFAULT : COLOR_YELLOW ): COLOR_RED);
+		}
+		g_pList->PostMessage(MSG_UpdateApp, m_nSrcPort, (LPARAM)&item);
+		char arg[64] = { 0 };
+		m_nAliveTime = max(aliveTime, 1);
+		sprintf_s(arg, "%d", m_nAliveTime);
+		std::string cmd = MAKE_CMD(KEEPALIVE, arg);
+		sendData(cmd.c_str(), cmd.length());
+	}
+	// 为了兼容以前的版本，保留了大写的"Register"
+	// 后续将对注册信令进行验证
+	else if(0 == strcmp(REGISTER, cmdType) || 0 == strcmp("Register", cmdType))
 	{
 		/**
 		<?xml version="1.0" encoding="GB2312" standalone="yes"?>
-		<request command="Register">
+		<request command="register">
 		  <parameters>
 		    <szAppId>%s</szAppId>
 		    <szPassword>%s</szPassword>

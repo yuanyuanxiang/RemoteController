@@ -44,7 +44,7 @@ void CAppListCtrl::AddColumns(const CString its[], int cols)
 {
 	for (int i = 0; i < cols; ++i)
 	{
-		InsertColumn(i, its[i], LVCFMT_CENTER, g_Width[i]);
+		InsertColumn(i, its[i], LVCFMT_LEFT, g_Width[i]);
 	}
 }
 
@@ -57,10 +57,32 @@ BEGIN_MESSAGE_MAP(CAppListCtrl, CListCtrl)
 	ON_COMMAND(ID_OP_STOP, &CAppListCtrl::StopApp)
 	ON_COMMAND(ID_OP_START, &CAppListCtrl::StartApp)
 	ON_COMMAND(ID_OP_UPDATE, &CAppListCtrl::UpdateApp)
+	ON_MESSAGE(MSG_InsertApp, &CAppListCtrl::MessageInsertApp)
+	ON_MESSAGE(MSG_UpdateApp, &CAppListCtrl::MessageUpdateApp)
+	ON_MESSAGE(MSG_DeleteApp, &CAppListCtrl::MessageDeleteApp)
+	ON_MESSAGE(MSG_ChangeColor, &CAppListCtrl::MessageChangeColor)
+	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CAppListCtrl::OnNMCustomdraw)
 END_MESSAGE_MAP()
 
 
 // CAppListCtrl 消息处理程序
+
+
+std::string CAppListCtrl::getCurSelNo()
+{
+	std::string n;
+	Lock();
+	POSITION pos = GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		USES_CONVERSION;
+		int row = GetNextSelectedItem(pos);
+		CString no = GetItemText(row, _no);
+		n = W2A(no);
+	}
+	Unlock();
+	return n;
+}
 
 
 void CAppListCtrl::OnNMRClick(NMHDR *pNMHDR, LRESULT *pResult)
@@ -292,4 +314,86 @@ void CAppListCtrl::UpdateApp()
 		std::string cmd = MAKE_CMD(UPDATE, "a");
 		g_pSocket->SendCommand(cmd.c_str(), W2A(no));
 	}
+}
+
+
+LRESULT CAppListCtrl::MessageInsertApp(WPARAM wParam, LPARAM lParam)
+{
+	TRACE("======> MessageInsertApp\n");
+	char port[32];
+	sprintf_s(port, "%d", wParam);
+	InsertAppItem(port);
+
+	return 0;
+}
+
+
+LRESULT CAppListCtrl::MessageUpdateApp(WPARAM wParam, LPARAM lParam)
+{
+	TRACE("======> MessageUpdateApp\n");
+	char port[32];
+	sprintf_s(port, "%d", wParam);
+	const AppInfo* item = (AppInfo*)lParam;
+	UpdateAppItem(port, *item);
+
+	return 0;
+}
+
+
+LRESULT CAppListCtrl::MessageDeleteApp(WPARAM wParam, LPARAM lParam)
+{
+	TRACE("======> MessageDeleteApp\n");
+	char port[32];
+	sprintf_s(port, "%d", wParam);
+	DeleteAppItem(port);
+
+	return 0;
+}
+
+
+LRESULT CAppListCtrl::MessageChangeColor(WPARAM wParam, LPARAM lParam)
+{
+	TRACE("======> MessageChangeColor\n");
+	char port[32];
+	sprintf_s(port, "%d", wParam);
+
+	USES_CONVERSION;
+	Lock();
+	int n = GetItemCount();
+	for(int row = 0; row < n; ++row)
+	{
+		CString no = GetItemText(row, _no);
+		if (0 == strcmp(port, W2A(no)))
+		{
+			SetItemData(row, lParam);
+			break;
+		}
+	}
+	Unlock();
+
+	return 0;
+}
+
+void CAppListCtrl::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	NMLVCUSTOMDRAW *pNMCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+
+	if (CDDS_ITEMPREPAINT == pNMCD->nmcd.dwDrawStage)
+	{
+		switch (pNMCD->nmcd.lItemlParam)
+		{
+		case COLOR_RED:// 红色：被守护程序可能出现假死
+			pNMCD->clrText = RGB(200, 0, 0);
+			break;
+		case COLOR_YELLOW:// 黄色：未找到被守护程序句柄
+			pNMCD->clrText = RGB(255, 200, 0);
+			break;
+		default:
+			pNMCD->clrText = RGB(0, 0, 0);
+			break;
+		}
+	}
+	*pResult = 0;
+	*pResult |= CDRF_NOTIFYPOSTPAINT;
+	*pResult |= CDRF_NOTIFYITEMDRAW;
 }

@@ -7,6 +7,7 @@
 #include "RemoteControllerDlg.h"
 #include "afxdialogex.h"
 #include "IPConfigDlg.h"
+#include "AliveTimeDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -23,33 +24,33 @@ const CString items[COLUMNS] = {
 	_T("线程"),
 	_T("句柄"),
 	_T("运行时长"), 
-	_T("启动次数"), 
+	_T("频次"), 
 	_T("创建日期"),
 	_T("修改日期"),
 	_T("大小"),
 	_T("版本"), 
-	_T("守护程序"), 
-	_T("位置")
+	_T("Keeper"), 
+	_T("程序位置")
 };
 
 // 每列宽度
 const int g_Width[COLUMNS] = {
 	55, // 序号
-	80, // 端口
-	130, // IP
-	200, // 名称
+	70, // 端口
+	125, // IP
+	125, // 名称
 	80, // CPU
 	100, // 内存
-	80, // 线程
-	80, // 句柄
+	75, // 线程
+	75, // 句柄
 	100, // 运行时长
-	80, // 启动次数
+	55, // 频次
 	155, // 创建日期
 	155, // 修改日期
-	100, // 文件大小
+	80, // 文件大小
 	80, // 版本
 	80, // 守护程序版本
-	600,// 位置
+	480,// 位置
 };
 
 // Socket服务端
@@ -159,6 +160,10 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_SETTIME, &CRemoteControllerDlg::OnUpdateSettime)
 	ON_UPDATE_COMMAND_UI(ID_UPDATE, &CRemoteControllerDlg::OnUpdateUpdate)
 	ON_UPDATE_COMMAND_UI(ID_UPDATE_SINGLE, &CRemoteControllerDlg::OnUpdateUpdateSingle)
+	ON_COMMAND(ID_SET_ALIVETIME, &CRemoteControllerDlg::OnSetAlivetime)
+	ON_COMMAND(ID_SCREENSHOT, &CRemoteControllerDlg::Screenshot)
+	ON_UPDATE_COMMAND_UI(ID_SCREENSHOT, &CRemoteControllerDlg::OnUpdateScreenshot)
+	ON_UPDATE_COMMAND_UI(ID_SET_ALIVETIME, &CRemoteControllerDlg::OnUpdateSetAlivetime)
 END_MESSAGE_MAP()
 
 
@@ -200,6 +205,9 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 
 	// 为列表视图控件添加列
 	m_ListApps.AddColumns(items, COLUMNS);
+	// 双缓存避免闪烁
+	m_ListApps.SetExtendedStyle(LVS_EX_DOUBLEBUFFER | m_ListApps.GetExtendedStyle());
+	m_ListApps.GetWindowRect(&m_rect);
 
 	// socket
 	WSADATA wsaData; // Socket
@@ -210,6 +218,9 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	char *p = m_strConf;
 	while('\0' != *p) ++p;
 	while('\\' != *p) --p;
+	strcpy(p, "\\ScreenShot\\");
+	m_sPicPath = CString(m_strConf);
+	CreateDirectory(m_sPicPath, NULL);
 	strcpy(p, "\\settings.ini");
 	GetPrivateProfileStringA("settings", "localIp", "", m_strIp, 64, m_strConf);
 	if (m_strIp[0] == '\0')
@@ -319,6 +330,8 @@ BOOL CRemoteControllerDlg::PreTranslateMessage(MSG* pMsg)
 	if( pMsg->message == WM_KEYDOWN && 
 		(pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN) )
 		return TRUE;
+	if( pMsg->message == WM_NCLBUTTONDBLCLK && pMsg->wParam == HTCAPTION)
+		return TRUE;
 
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
@@ -340,7 +353,11 @@ void CRemoteControllerDlg::OnPoweroffAll()
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
+	{
+		BeginWaitCursor();
 		g_pSocket->ControlDevice(SHUTDOWN);
+		EndWaitCursor();
+	}
 }
 
 
@@ -475,7 +492,11 @@ void CRemoteControllerDlg::OnRebootSystem()
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
+	{
+		BeginWaitCursor();
 		g_pSocket->ControlDevice(REBOOT);
+		EndWaitCursor();
+	}
 }
 
 
@@ -507,7 +528,7 @@ void CRemoteControllerDlg::OnSettime()
 		SYSTEMTIME st;
 		GetLocalTime(&st);
 		char buf[64];
-		sprintf_s(buf, "settime:%d,%d,%d,%d,%d,%d,%d,%d", st.wYear, st.wMonth, st.wDayOfWeek, 
+		sprintf_s(buf, "%s:%d,%d,%d,%d,%d,%d,%d,%d", SETTIME, st.wYear, st.wMonth, st.wDayOfWeek, 
 			st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		g_pSocket->ControlDevice(buf);
 	}
@@ -576,6 +597,49 @@ void CRemoteControllerDlg::OnUpdateUpdate(CCmdUI *pCmdUI)
 
 
 void CRemoteControllerDlg::OnUpdateUpdateSingle(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnSetAlivetime()
+{
+	CAliveTimeDlg dlg;
+	dlg.m_nAliveTime = 0;
+	if (IDOK == dlg.DoModal() && dlg.m_nAliveTime)
+	{
+		std::string cur = m_ListApps.getCurSelNo();
+		g_pSocket->SetAliveTime(dlg.m_nAliveTime, cur.length() ? cur.c_str() : NULL);
+	}
+}
+
+
+void CRemoteControllerDlg::Screenshot()
+{
+	CWindowDC winDC(this);
+
+	CImage image;
+	int nBPP = winDC.GetDeviceCaps(BITSPIXEL) * winDC.GetDeviceCaps(PLANES);
+	if(image.Create(m_rect.Width(), m_rect.Height(), max(nBPP, 24), 0))
+	{
+		CImageDC imageDC(image);
+		::BitBlt(imageDC, 0, 0, m_rect.Width(), m_rect.Height(), winDC, m_rect.left, m_rect.top, SRCCOPY);
+		CTime t = CTime::GetCurrentTime();
+		CString tt = t.Format("%Y-%m-%d_%H-%M-%S.png");
+		CString strFull = m_sPicPath + tt;
+		HRESULT hr = image.Save(strFull);
+		MessageBox(CString("拍摄快照\"") + tt + (S_OK == hr ? CString("\"成功!") : CString("\"失败!")));
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateScreenshot(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnUpdateSetAlivetime(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

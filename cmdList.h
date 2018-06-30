@@ -17,22 +17,25 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 	return (':' == *p) ? p + 1 : "";
 }
 
-#define RESTART			"restart"
+// 默认心跳周期（秒）
+#define ALIVE_TIME 120
 
-#define REFRESH			"refresh"
+#define RESTART			"restart"		// 重启程序
 
-#define STOP			"stop"
+#define REFRESH			"refresh"		// 刷新现实
 
-#define START			"start"
+#define STOP			"stop"			// 停止程序
 
-#define SHUTDOWN		"shutdown"
+#define START			"start"			// 启动程序
 
-#define REBOOT			"reboot"
+#define SHUTDOWN		"shutdown"		// 关机
 
-#define REGISTER		"register"
+#define REBOOT			"reboot"		// 重启电脑
 
-#define KEEPALIVE		"keepAlive"
+#define REGISTER		"register"		// 注册=>register:success
 
-#define UPDATE			"update"
+#define KEEPALIVE		"keepAlive"		// 心跳=>keeAlive:AliveTime
 
-#define SETTIME			"settime"
+#define UPDATE			"update"		// 升级程序=>update:a
+
+#define SETTIME			"settime"		// 校时=>settime:年,月,日,时,分,秒

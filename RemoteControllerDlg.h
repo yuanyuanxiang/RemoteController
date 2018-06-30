@@ -29,9 +29,10 @@ public:
 	int m_nPort;				// Ip端口
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
+	CString m_sPicPath;			// 存放图片的目录
 	CSocketServer *m_pServer;	// socket 服务端
 
-	CRITICAL_SECTION m_cs;
+	CRITICAL_SECTION m_cs;		// 未用到
 	void Lock() { EnterCriticalSection(&m_cs); }
 	void Unlock() { LeaveCriticalSection(&m_cs); }
 
@@ -49,6 +50,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	CRect m_rect;
 	CAppListCtrl m_ListApps;
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -73,6 +75,10 @@ public:
 	afx_msg void OnUpdateSettime(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateUpdate(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateUpdateSingle(CCmdUI *pCmdUI);
+	afx_msg void OnSetAlivetime();
+	afx_msg void Screenshot(); // 截图保存快照
+	afx_msg void OnUpdateScreenshot(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateSetAlivetime(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

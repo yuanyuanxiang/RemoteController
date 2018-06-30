@@ -44,6 +44,9 @@ public:
 	// 控制硬件设备：关闭/重启/时间同步
 	void ControlDevice(const char *msg);
 
+	// 设置心跳周期（即刷新频率）
+	void SetAliveTime(int msg, const char *id = NULL);
+
 	CRITICAL_SECTION m_cs;
 
 	void Lock() { EnterCriticalSection(&m_cs); }
