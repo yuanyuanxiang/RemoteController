@@ -63,6 +63,9 @@
     <ClInclude Include="AliveTimeDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="UpdateServerDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteController.cpp">
@@ -93,6 +96,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AliveTimeDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateServerDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

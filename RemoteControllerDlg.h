@@ -27,6 +27,7 @@ public:
 
 	char m_strIp[64];			// 本机IP
 	int m_nPort;				// Ip端口
+	char m_strUp[52];			// 升级地址
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
 	CString m_sPicPath;			// 存放图片的目录
@@ -79,6 +80,9 @@ public:
 	afx_msg void Screenshot(); // 截图保存快照
 	afx_msg void OnUpdateScreenshot(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateSetAlivetime(CCmdUI *pCmdUI);
+	afx_msg void OnSelectSettime();
+	afx_msg void OnUpdateSelectSettime(CCmdUI *pCmdUI);
+	afx_msg void OnSetUpserver();
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

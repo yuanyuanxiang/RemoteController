@@ -5,6 +5,7 @@
 #include "RemoteController.h"
 #include "AppListCtrl.h"
 #include "socket\SocketServer.h"
+#include "RemoteControllerDlg.h"
 
 extern CSocketServer *g_pSocket;
 
@@ -188,14 +189,22 @@ void CAppListCtrl::DeleteAppItem(const char* port)
 		CString no = GetItemText(row, _no);
 		if (0 == strcmp(port, W2A(no)))
 		{
+			CString s = GetItemText(row, _id);
+			const char *str = W2A(s);
+			int id = atoi(str);// 被删掉的行
 			DeleteItem(row);
-			// 后面需要重排序
+			// 所有的行需要重新编号
 			--n;
-			for(int i = row; i < n; ++i)
+			for(int i = 0; i < n; ++i)
 			{
-				CString s;
-				s.Format(_T("%d"), i + 1);
-				SetItemText(i, _id, s);
+				s = GetItemText(i, _id);
+				str = W2A(s);
+				int temp = atoi(str);
+				if (temp > id)
+				{
+					s.Format(_T("%d"), temp - 1);
+					SetItemText(i, _id, s);
+				}
 			}
 			break;
 		}
@@ -264,7 +273,10 @@ void CAppListCtrl::OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult)
 		sort_col = pNMLV->iSubItem;
 		method = (last_col==sort_col ? !method : true);
 		for (int i = 0; i < n; ++i)
-			SetItemData(i, i);
+		{
+			DWORD_PTR cur = GetItemData(i);
+			SetItemData(i, (COLOR_DEFAULT < cur) ? cur : i);
+		}
 		SortItems(&comp, (DWORD_PTR)this);
 		last_col = sort_col;
 	}
@@ -311,7 +323,9 @@ void CAppListCtrl::UpdateApp()
 		Lock();
 		CString no = GetItemText(m_nIndex, _no);
 		Unlock();
-		std::string cmd = MAKE_CMD(UPDATE, "a");
+		char arg[64];
+		sprintf_s(arg, "a,%s", g_MainDlg->m_strUp);
+		std::string cmd = MAKE_CMD(UPDATE, arg);
 		g_pSocket->SendCommand(cmd.c_str(), W2A(no));
 	}
 }
@@ -334,7 +348,8 @@ LRESULT CAppListCtrl::MessageUpdateApp(WPARAM wParam, LPARAM lParam)
 	char port[32];
 	sprintf_s(port, "%d", wParam);
 	const AppInfo* item = (AppInfo*)lParam;
-	UpdateAppItem(port, *item);
+	AppInfo temp(*item);
+	UpdateAppItem(port, temp);
 
 	return 0;
 }
@@ -388,7 +403,13 @@ void CAppListCtrl::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 		case COLOR_YELLOW:// 黄色：未找到被守护程序句柄
 			pNMCD->clrText = RGB(255, 200, 0);
 			break;
-		default:
+		case COLOR_BLUE1:// 蓝色：系统时间未校准或网络延时大
+			pNMCD->clrText = RGB(0, 200, 255);
+			break;
+		case COLOR_BLUE2:// 深蓝
+			pNMCD->clrText = RGB(0, 0, 255);
+			break;
+		case COLOR_DEFAULT:
 			pNMCD->clrText = RGB(0, 0, 0);
 			break;
 		}

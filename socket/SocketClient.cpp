@@ -25,7 +25,7 @@ UINT WINAPI CSocketClient::ParseThread(LPVOID param)
 	pThis->m_bIsParsing = true;
 	while (pThis->m_bAlive)
 	{
-		Sleep(50);
+		Sleep(10);
 		pThis->ParseData();
 	}
 	pThis->m_bIsParsing = false;
@@ -119,6 +119,14 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 	return text ? text : "";
 }
 
+// SYSTEMTIME转time_t
+inline time_t SystemTime2Time_t(const SYSTEMTIME &st)
+{
+	struct tm tick = { st.wSecond, st.wMinute, st.wHour, 
+		st.wDay, st.wMonth - 1, st.wYear - 1900, st.wDayOfWeek, 0, 0 };
+	return mktime(&tick);
+}
+
 /**
 <?xml version="1.0" encoding="GB2312" standalone="yes"?>
 <request command="keepAlive">
@@ -138,11 +146,15 @@ inline const char* GetValue(const TiXmlElement* pParent, const char* pName)
 	<szKeeperVer>%s</szKeeperVer>
 	<szCmdLine>%s</szCmdLine>
 	<szStatus>%s</szStatus>
+	<szCurrentTime>%s</szCurrentTime>
 </parameters>
 </request>
 */
 void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 {
+	SYSTEMTIME st;// current time
+	GetLocalTime(&st);
+	time_t tick = SystemTime2Time_t(st);
 	char seq[32] = { 0 }, cid[32] = { 0 };
 	const char *xml = GetSeqAndCallId(buffer, seq, cid);
 	if (0 == *xml)
@@ -190,13 +202,28 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
 		const char *status = GetValue(parameters, "szStatus");
-		if (strcmp(item.status, status))
+		strcpy_s(item.status, status);
+		int clr = strcmp("异常", item.status) ? 
+			(strcmp("未检测", item.status) ? COLOR_DEFAULT : COLOR_YELLOW): COLOR_RED;
+		if (COLOR_DEFAULT == clr)
 		{
-			strcpy_s(item.status, status);
-			g_pList->PostMessage(MSG_ChangeColor, m_nSrcPort, 
-				strcmp("异常", item.status) ? ( strcmp("未检测", item.status) 
-				? COLOR_DEFAULT : COLOR_YELLOW ): COLOR_RED);
+			int n[8] = { 0 }, i = 0;
+			char sendTime[64];// send msg time
+			strcpy_s(sendTime, GetValue(parameters, "szCurrentTime"));
+			for(char *p = strtok(sendTime, ","); NULL != p && i < 8; ++i)
+			{ 
+				n[i] = atoi(p);
+				p = strtok(NULL, ",");
+			}
+			if (sendTime[0])
+			{
+				SYSTEMTIME st_src = { n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7] };
+				time_t tick_src = SystemTime2Time_t(st_src);
+				int error = abs(int(tick - tick_src) * 1000 + st.wMilliseconds - st_src.wMilliseconds);
+				clr = error > 1024 ? (error > 2048 ? COLOR_BLUE2 : COLOR_BLUE1) : COLOR_DEFAULT;
+			}
 		}
+		g_pList->PostMessage(MSG_ChangeColor, m_nSrcPort, clr);
 		g_pList->PostMessage(MSG_UpdateApp, m_nSrcPort, (LPARAM)&item);
 		char arg[64] = { 0 };
 		m_nAliveTime = max(aliveTime, 1);

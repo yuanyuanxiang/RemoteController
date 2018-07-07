@@ -8,6 +8,7 @@
 #include "afxdialogex.h"
 #include "IPConfigDlg.h"
 #include "AliveTimeDlg.h"
+#include "UpdateServerDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,7 +51,7 @@ const int g_Width[COLUMNS] = {
 	80, // 文件大小
 	80, // 版本
 	80, // 守护程序版本
-	480,// 位置
+	475,// 位置
 };
 
 // Socket服务端
@@ -117,6 +118,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 	m_bAdvanced = false;
 	InitializeCriticalSection(&m_cs);
 	g_MainDlg = this;
+	memset(m_strUp, 0, sizeof(m_strUp));
 }
 
 
@@ -164,6 +166,9 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_COMMAND(ID_SCREENSHOT, &CRemoteControllerDlg::Screenshot)
 	ON_UPDATE_COMMAND_UI(ID_SCREENSHOT, &CRemoteControllerDlg::OnUpdateScreenshot)
 	ON_UPDATE_COMMAND_UI(ID_SET_ALIVETIME, &CRemoteControllerDlg::OnUpdateSetAlivetime)
+	ON_COMMAND(ID_SELECT_SETTIME, &CRemoteControllerDlg::OnSelectSettime)
+	ON_UPDATE_COMMAND_UI(ID_SELECT_SETTIME, &CRemoteControllerDlg::OnUpdateSelectSettime)
+	ON_COMMAND(ID_SET_UPSERVER, &CRemoteControllerDlg::OnSetUpserver)
 END_MESSAGE_MAP()
 
 
@@ -225,6 +230,9 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	GetPrivateProfileStringA("settings", "localIp", "", m_strIp, 64, m_strConf);
 	if (m_strIp[0] == '\0')
 		strcpy_s(m_strIp, GetLocalHost());
+	GetPrivateProfileStringA("settings", "upServer", "", m_strUp, sizeof(m_strUp), m_strConf);
+	if (0 == strcmp(m_strIp, m_strUp))
+		memset(m_strUp, 0, sizeof(m_strUp));
 
 	m_nPort = GetPrivateProfileIntA("settings", "port", 9999, m_strConf);
 	TRACE("======> Start socket: Ip = %s, Port = %d\n", m_strIp, m_nPort);
@@ -330,8 +338,6 @@ BOOL CRemoteControllerDlg::PreTranslateMessage(MSG* pMsg)
 	if( pMsg->message == WM_KEYDOWN && 
 		(pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN) )
 		return TRUE;
-	if( pMsg->message == WM_NCLBUTTONDBLCLK && pMsg->wParam == HTCAPTION)
-		return TRUE;
 
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
@@ -348,8 +354,8 @@ void CRemoteControllerDlg::OnPoweroffAll()
 	int i = 0, nRet = 0;
 	do 
 	{
-		nRet = MessageBox(_T("点击\"确定\"将试图关闭所有连接到本控制器的设备!")\
-			_T("\r\n请不要轻易点击\"确定\"按钮, 盼三思而后行!"), 
+		nRet = MessageBox(_T("点击\"是\"将试图关闭所有连接到本控制器的设备!")\
+			_T("\r\n请不要轻易点击\"是\"按钮, 盼三思而后行!"), 
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
@@ -487,8 +493,8 @@ void CRemoteControllerDlg::OnRebootSystem()
 	int i = 0, nRet = 0;
 	do 
 	{
-		nRet = MessageBox(_T("点击\"确定\"将试图重启所有连接到本控制器的设备!")\
-			_T("\r\n请不要轻易点击\"确定\"按钮, 盼三思而后行!"), 
+		nRet = MessageBox(_T("点击\"是\"将试图重启所有连接到本控制器的设备!")\
+			_T("\r\n请不要轻易点击\"是\"按钮, 盼三思而后行!"), 
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
@@ -514,16 +520,17 @@ void CRemoteControllerDlg::OnUpdateRefreshAll(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnUpdate()
 {
-	if (IDYES == MessageBox(_T("确定\"升级\"守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	if (IDYES == MessageBox(_T("确定升级全部的守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
-		g_pSocket->SendCommand(UPDATE);
+		std::string cmd = MAKE_CMD(UPDATE, m_strUp);
+		g_pSocket->SendCommand(cmd.c_str());
 	}
 }
 
 
 void CRemoteControllerDlg::OnSettime()
 {
-	if (IDYES == MessageBox(_T("确定\"同步\"所有时间吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	if (IDYES == MessageBox(_T("确定将全部服务器与本机进行时间校准吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
 		SYSTEMTIME st;
 		GetLocalTime(&st);
@@ -540,7 +547,7 @@ void CRemoteControllerDlg::OnStopall()
 	int i = 0, nRet = 0;
 	do 
 	{
-		nRet = MessageBox(_T("点击\"确定\"将停止所有程序! 盼三思而后行!"), 
+		nRet = MessageBox(_T("点击\"是\"将停止所有程序! 盼三思而后行!"), 
 			_T("警告"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2);
 	} while (IDYES == nRet && ++i < 3);
 	if (3 == i)
@@ -556,7 +563,7 @@ void CRemoteControllerDlg::OnUpdateStopall(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnStartall()
 {
-	if(IDYES == MessageBox(_T("点击\"确定\"将启动所有程序!"), 
+	if(IDYES == MessageBox(_T("点击\"是\"将启动所有程序! 你确定启动吗?"), 
 			_T("提示"), MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2))
 		g_pSocket->SendCommand(START);
 }
@@ -570,15 +577,16 @@ void CRemoteControllerDlg::OnUpdateStartall(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnUpdateSingle()
 {
-	if (IDYES == MessageBox(_T("确定\"升级\"守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos && IDYES == MessageBox(_T("确定升级所选的守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
-		POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
 		while (pos)
 		{
 			int nRow = m_ListApps.GetNextSelectedItem(pos);
 			CString no = m_ListApps.GetItemText(nRow, _no);
 			USES_CONVERSION;
-			g_pSocket->SendCommand(UPDATE, W2A(no));
+			std::string cmd = MAKE_CMD(UPDATE, m_strUp);
+			g_pSocket->SendCommand(cmd.c_str(), W2A(no));
 		}
 	}
 }
@@ -642,4 +650,44 @@ void CRemoteControllerDlg::OnUpdateScreenshot(CCmdUI *pCmdUI)
 void CRemoteControllerDlg::OnUpdateSetAlivetime(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnSelectSettime()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos && IDYES == MessageBox(_T("确定将所选服务器与本机进行时间校准吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		CString no = m_ListApps.GetItemText(nRow, _no);
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		char buf[64];
+		sprintf_s(buf, "%s:%d,%d,%d,%d,%d,%d,%d,%d", SETTIME, st.wYear, st.wMonth, st.wDayOfWeek, 
+			st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		USES_CONVERSION;
+		g_pSocket->SendCommand(buf, W2A(no));
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateSelectSettime(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnSetUpserver()
+{
+	CUpdateServerDlg dlg;
+	CString old = CString(m_strUp[0] ? m_strUp : m_strIp);
+	dlg.m_strUpServer = old;
+	if (IDOK == dlg.DoModal() && old != dlg.m_strUpServer)
+	{
+		USES_CONVERSION;
+		strcpy_s(m_strUp, W2A(dlg.m_strUpServer));
+		if (0 == strcmp(m_strIp, m_strUp))
+			memset(m_strUp, 0, sizeof(m_strUp));
+		WritePrivateProfileStringA("settings", "upServer", m_strUp, m_strConf);
+	}
 }
