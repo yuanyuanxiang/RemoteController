@@ -30,10 +30,12 @@ public:
 	char m_strUp[52];			// 升级地址
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
+	bool m_bDetectTime;			// 检测系统时差
 	CString m_sPicPath;			// 存放图片的目录
 	CSocketServer *m_pServer;	// socket 服务端
 
 	CRITICAL_SECTION m_cs;		// 未用到
+	bool IsDetectTimeError() const { return m_bDetectTime; }
 	void Lock() { EnterCriticalSection(&m_cs); }
 	void Unlock() { LeaveCriticalSection(&m_cs); }
 
@@ -83,6 +85,8 @@ public:
 	afx_msg void OnSelectSettime();
 	afx_msg void OnUpdateSelectSettime(CCmdUI *pCmdUI);
 	afx_msg void OnSetUpserver();
+	afx_msg void OnDetectTimeError();
+	afx_msg void OnUpdateDetectTimeError(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

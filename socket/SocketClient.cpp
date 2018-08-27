@@ -2,6 +2,7 @@
 #include <process.h>
 #include "..\AppListCtrl.h"
 #include "SocketServer.h"
+#include "..\RemoteControllerDlg.h"
 
 #ifndef X64
 #ifdef _DEBUG
@@ -205,7 +206,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.status, status);
 		int clr = strcmp("Òì³£", item.status) ? 
 			(strcmp("Î´¼ì²â", item.status) ? COLOR_DEFAULT : COLOR_YELLOW): COLOR_RED;
-		if (COLOR_DEFAULT == clr)
+		if (COLOR_DEFAULT == clr && g_MainDlg->IsDetectTimeError())
 		{
 			int n[8] = { 0 }, i = 0;
 			char sendTime[64];// send msg time
@@ -220,7 +221,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 				SYSTEMTIME st_src = { n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7] };
 				time_t tick_src = SystemTime2Time_t(st_src);
 				int error = abs(int(tick - tick_src) * 1000 + st.wMilliseconds - st_src.wMilliseconds);
-				clr = error > 1024 ? (error > 2048 ? COLOR_BLUE2 : COLOR_BLUE1) : COLOR_DEFAULT;
+				clr = error > 3000 ? (error > 6000 ? COLOR_BLUE2 : COLOR_BLUE1) : COLOR_DEFAULT;
 			}
 		}
 		g_pList->PostMessage(MSG_ChangeColor, m_nSrcPort, clr);

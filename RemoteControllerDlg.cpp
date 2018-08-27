@@ -10,6 +10,37 @@
 #include "AliveTimeDlg.h"
 #include "UpdateServerDlg.h"
 
+#include <DbgHelp.h>
+#include <io.h>
+#include <direct.h>
+#pragma comment(lib, "Dbghelp.lib")
+
+/** 
+* @brief 程序遇到未知BUG导致终止时调用此函数，不弹框
+* 并且转储dump文件到dump目录.
+*/
+long WINAPI whenbuged(_EXCEPTION_POINTERS *excp)
+{
+	// 如果文件夹不存在，则创建之
+	if (_access("./dump", 0) == -1)
+		_mkdir("./dump");
+
+	char curTime[64];
+	time_t TIME(time(0));
+	strftime(curTime, 64, "./dump/%Y-%m-%d %H%M%S.dmp", localtime(&TIME));
+	HANDLE hFile = ::CreateFileA(curTime, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
+		FILE_ATTRIBUTE_NORMAL, NULL);
+	if(INVALID_HANDLE_VALUE != hFile)
+	{
+		MINIDUMP_EXCEPTION_INFORMATION einfo = {::GetCurrentThreadId(), excp, FALSE};
+		::MiniDumpWriteDump(::GetCurrentProcess(), ::GetCurrentProcessId(), 
+			hFile, MiniDumpWithFullMemory, &einfo, NULL, NULL);
+		::CloseHandle(hFile);
+	}
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -116,6 +147,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 
 	m_pServer = NULL;
 	m_bAdvanced = false;
+	m_bDetectTime = true;
 	InitializeCriticalSection(&m_cs);
 	g_MainDlg = this;
 	memset(m_strUp, 0, sizeof(m_strUp));
@@ -169,6 +201,8 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_COMMAND(ID_SELECT_SETTIME, &CRemoteControllerDlg::OnSelectSettime)
 	ON_UPDATE_COMMAND_UI(ID_SELECT_SETTIME, &CRemoteControllerDlg::OnUpdateSelectSettime)
 	ON_COMMAND(ID_SET_UPSERVER, &CRemoteControllerDlg::OnSetUpserver)
+	ON_COMMAND(ID_DETECT_TIME_ERROR, &CRemoteControllerDlg::OnDetectTimeError)
+	ON_UPDATE_COMMAND_UI(ID_DETECT_TIME_ERROR, &CRemoteControllerDlg::OnUpdateDetectTimeError)
 END_MESSAGE_MAP()
 
 
@@ -240,6 +274,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	g_pSocket = m_pServer;
 
 	m_bAdvanced = GetPrivateProfileIntA("settings", "advanced", 0, m_strConf);
+	SetUnhandledExceptionFilter(&whenbuged);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -690,4 +725,16 @@ void CRemoteControllerDlg::OnSetUpserver()
 			memset(m_strUp, 0, sizeof(m_strUp));
 		WritePrivateProfileStringA("settings", "upServer", m_strUp, m_strConf);
 	}
+}
+
+
+void CRemoteControllerDlg::OnDetectTimeError()
+{
+	m_bDetectTime = !m_bDetectTime;
+}
+
+
+void CRemoteControllerDlg::OnUpdateDetectTimeError(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bDetectTime);
 }
