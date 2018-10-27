@@ -33,6 +33,7 @@ private:
 	bool m_bIsParsing;		// 解析线程是否开启
 	bool m_bIsReceiving;	// 收数据线程是否开启
 	int m_nAliveTime;		// 心跳周期（秒）
+	clock_t m_tick;			// 消息一个来回的计时器
 
 	char *m_RecvBuffer;			// 收数据缓存
 	RingBuffer *m_RingBuffer;	// 缓存区
@@ -72,6 +73,9 @@ public:
 
 	// 设置心跳周期
 	void SetAliveTime(int nAliveTime) { m_nAliveTime = nAliveTime; }
+
+	// 记录当前时间
+	void StartClock() { m_tick = clock(); }
 
 	// 标记为将退出
 	void SetExit() { m_bExit = true; m_bAlive = false; }

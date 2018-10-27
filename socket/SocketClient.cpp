@@ -59,6 +59,7 @@ UINT WINAPI CSocketClient::ReceiveThread(LPVOID param)
 */
 CSocketClient::CSocketClient(SOCKET client, const char *Ip, int port)
 {
+	m_tick = 0;
 	m_nType = 1;
 	m_Socket = client;
 	strcpy_s(m_chToIp, Ip);
@@ -146,6 +147,7 @@ inline time_t SystemTime2Time_t(const SYSTEMTIME &st)
 	<szVersion>%s</szVersion>
 	<szKeeperVer>%s</szKeeperVer>
 	<szCmdLine>%s</szCmdLine>
+	<szDiskFreeSpace>%s</szDiskFreeSpace>
 	<szStatus>%s</szStatus>
 	<szCurrentTime>%s</szCurrentTime>
 </parameters>
@@ -186,6 +188,14 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 	// 为了兼容以前的版本，保留了大写的"KeepAlive"
 	if (0 == strcmp(KEEPALIVE, cmdType) || 0 == strcmp("KeepAlive", cmdType))
 	{
+		int clr = 0;
+		if (m_tick)
+		{
+			int n = (clock() - m_tick)/2;
+			clr = n > 100 ? COLOR_RED : COLOR_DEFAULT;
+			m_tick = 0;
+			TRACE("======> [%s]时延预估：%dms.\n", GetIp(), n);
+		}
 		int aliveTime = atoi(GetValue(parameters, "nAliveTime"));
 		strcpy_s(item.ip, m_chToIp);
 		strcpy_s(item.name, GetValue(parameters, "szName"));
@@ -202,9 +212,11 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		if (0 == strcmp("", item.version)) strcpy_s(item.version, "无");
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
+		strcpy_s(item.disk_info, GetValue(parameters, "szDiskFreeSpace"));
 		const char *status = GetValue(parameters, "szStatus");
 		strcpy_s(item.status, status);
-		int clr = strcmp("异常", item.status) ? 
+		if (COLOR_DEFAULT == clr)
+			clr = strcmp("异常", item.status) ? 
 			(strcmp("未检测", item.status) ? COLOR_DEFAULT : COLOR_YELLOW): COLOR_RED;
 		if (COLOR_DEFAULT == clr && g_MainDlg->IsDetectTimeError())
 		{

@@ -62,7 +62,8 @@ const CString items[COLUMNS] = {
 	_T("大小"),
 	_T("版本"), 
 	_T("Keeper"), 
-	_T("程序位置")
+	_T("程序位置"),
+	_T("磁盘容量")
 };
 
 // 每列宽度
@@ -83,6 +84,7 @@ const int g_Width[COLUMNS] = {
 	80, // 版本
 	80, // 守护程序版本
 	475,// 位置
+	120,// 磁盘容量
 };
 
 // Socket服务端

@@ -22,7 +22,7 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 
 #define RESTART			"restart"		// 重启程序
 
-#define REFRESH			"refresh"		// 刷新现实
+#define REFRESH			"refresh"		// 刷新显示
 
 #define STOP			"stop"			// 停止程序
 

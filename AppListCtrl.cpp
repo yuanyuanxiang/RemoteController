@@ -136,6 +136,7 @@ void CAppListCtrl::UpdateAppItem(const char* port, const AppInfo &it)
 			SetItemText(row, _version, A2W(it.version));
 			SetItemText(row, _keep_ver, A2W(it.keep_ver));
 			SetItemText(row, _cmd_line, A2W(it.cmd_line));
+			SetItemText(row, _disk_info, A2W(it.disk_info));
 			break;
 		}
 	}

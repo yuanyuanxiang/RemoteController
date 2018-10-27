@@ -14,10 +14,10 @@ enum UserMsg
 };
 
 #define COLOR_DEFAULT 2047	// 默认字体颜色
-#define COLOR_RED 2048		// 红色字体:程序异常
+#define COLOR_RED 2048		// 红色字体:程序异常或网络时延较大
 #define COLOR_YELLOW 2049	// 黄色字体:窗口异常
 #define COLOR_BLUE1 2050	// 蓝色字体:网络或校时异常
-#define COLOR_BLUE2 2051	// 深蓝
+#define COLOR_BLUE2 2051	// 深蓝:时间差距较大
 
 // CAppListCtrl
 

@@ -106,6 +106,7 @@ void CSocketServer::unInit()
 void CSocketServer::SendCommand(const char *msg, const char *id)
 {
 	TRACE("======> SendMessage[%s]: %s\n", id ? id : "ALL", msg);
+	bool reFresh = (0 == strcmp(msg, REFRESH));
 	Lock();
 	for (int i = 0; i < MAX_LISTEN; ++i)
 	{
@@ -116,12 +117,14 @@ void CSocketServer::SendCommand(const char *msg, const char *id)
 				if(0 == strcmp(id, g_fd_ArrayC[i]->GetNo()))
 				{
 					g_fd_ArrayC[i]->sendData(msg, strlen(msg));
+					if (reFresh) g_fd_ArrayC[i]->StartClock();
 					TRACE("======> SendCommand: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
 					break;
 				}
 			}else
 			{
 				g_fd_ArrayC[i]->sendData(msg, strlen(msg));
+				if (reFresh) g_fd_ArrayC[i]->StartClock();
 				TRACE("======> SendCommand: %s[%s] OK\n", g_fd_ArrayC[i]->GetIp(), g_fd_ArrayC[i]->GetNo());
 			}
 		}
