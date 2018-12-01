@@ -66,6 +66,12 @@
     <ClInclude Include="UpdateServerDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="UpdateServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="md5driver.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteController.cpp">
@@ -99,6 +105,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UpdateServerDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="md5driver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

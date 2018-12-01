@@ -21,19 +21,18 @@
 */
 long WINAPI whenbuged(_EXCEPTION_POINTERS *excp)
 {
-	// 如果文件夹不存在，则创建之
-	if (_access("./dump", 0) == -1)
-		_mkdir("./dump");
-
-	char curTime[64];
+	char path[_MAX_PATH], *p = path;
+	GetModuleFileNameA(NULL, path, _MAX_PATH);
+	while (*p) ++p;
+	while ('\\' != *p) --p;
 	time_t TIME(time(0));
-	strftime(curTime, 64, "./dump/%Y-%m-%d %H%M%S.dmp", localtime(&TIME));
-	HANDLE hFile = ::CreateFileA(curTime, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
+	strftime(p, 64, "\\dump_%Y-%m-%d %H%M%S.dmp", localtime(&TIME));
+	HANDLE hFile = ::CreateFileA(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if(INVALID_HANDLE_VALUE != hFile)
 	{
 		MINIDUMP_EXCEPTION_INFORMATION einfo = {::GetCurrentThreadId(), excp, FALSE};
-		::MiniDumpWriteDump(::GetCurrentProcess(), ::GetCurrentProcessId(), 
+		::MiniDumpWriteDump(::GetCurrentProcess(), ::GetCurrentProcessId(),
 			hFile, MiniDumpWithFullMemory, &einfo, NULL, NULL);
 		::CloseHandle(hFile);
 	}
@@ -158,6 +157,12 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 
 CRemoteControllerDlg::~CRemoteControllerDlg()
 {
+	if (m_pUpServer)
+	{
+		m_pUpServer->unInit();
+		delete m_pUpServer;
+		m_pUpServer = NULL;
+	}
 	WSACleanup();
 	DeleteCriticalSection(&m_cs);
 }
@@ -269,6 +274,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	GetPrivateProfileStringA("settings", "upServer", "", m_strUp, sizeof(m_strUp), m_strConf);
 	if (0 == strcmp(m_strIp, m_strUp))
 		memset(m_strUp, 0, sizeof(m_strUp));
+	StartUpServer();
 
 	m_nPort = GetPrivateProfileIntA("settings", "port", 9999, m_strConf);
 	TRACE("======> Start socket: Ip = %s, Port = %d\n", m_strIp, m_nPort);
@@ -725,10 +731,25 @@ void CRemoteControllerDlg::OnSetUpserver()
 		strcpy_s(m_strUp, W2A(dlg.m_strUpServer));
 		if (0 == strcmp(m_strIp, m_strUp))
 			memset(m_strUp, 0, sizeof(m_strUp));
+		StartUpServer();
 		WritePrivateProfileStringA("settings", "upServer", m_strUp, m_strConf);
 	}
 }
 
+
+void CRemoteControllerDlg::StartUpServer()
+{
+	if (strlen(m_strUp) < 7)
+	{
+		if(NULL == m_pUpServer)
+			m_pUpServer = new UpdateServer();
+		m_pUpServer->unInit();
+		if (m_pUpServer->init(m_strIp, atoi(m_strUp)))
+		{
+			MessageBox(_T("监听指定端口失败!"), _T("错误"), MB_ICONERROR);
+		}
+	}
+}
 
 void CRemoteControllerDlg::OnDetectTimeError()
 {

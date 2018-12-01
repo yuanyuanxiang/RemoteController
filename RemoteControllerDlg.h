@@ -7,6 +7,7 @@
 #include "AppListCtrl.h"
 #include "socket\SocketServer.h"
 #include "Resource.h"
+#include "UpdateServer.h"
 
 
 extern CSocketServer *g_pSocket;
@@ -33,6 +34,9 @@ public:
 	bool m_bDetectTime;			// 检测系统时差
 	CString m_sPicPath;			// 存放图片的目录
 	CSocketServer *m_pServer;	// socket 服务端
+	UpdateServer *m_pUpServer;	// 本机升级服务器
+
+	void StartUpServer();
 
 	CRITICAL_SECTION m_cs;		// 未用到
 	bool IsDetectTimeError() const { return m_bDetectTime; }
