@@ -20,6 +20,26 @@ int sort_col = 0;
 // ≈≈–Ú∑Ω Ω
 bool method = true;
 
+String W_2_A(const CString &wStr)
+{
+	int len = WideCharToMultiByte(CP_ACP, 0, wStr, wStr.GetLength(), NULL, 0, NULL, NULL);
+	String str(len);
+	WideCharToMultiByte(CP_ACP, 0, wStr, wStr.GetLength(), str, len, NULL, NULL);
+	str[len] = '\0';
+	return str;
+}
+
+#ifdef W2A
+#undef W2A
+#endif
+
+#ifdef USES_CONVERSION
+#undef USES_CONVERSION
+#endif
+
+#define W2A W_2_A
+#define USES_CONVERSION
+
 // CAppListCtrl
 
 IMPLEMENT_DYNAMIC(CAppListCtrl, CListCtrl)
@@ -122,21 +142,21 @@ void CAppListCtrl::UpdateAppItem(const char* port, const AppInfo &it)
 		CString no = GetItemText(row, _no);
 		if (0 == strcmp(port, W2A(no)))
 		{
-			SetItemText(row, _ip, A2W(it.ip));
-			SetItemText(row, _name, A2W(it.name));
-			SetItemText(row, _cpu, A2W(it.cpu));
-			SetItemText(row, _mem, A2W(it.mem));
-			SetItemText(row, _threads, A2W(it.threads));
-			SetItemText(row, _handles, A2W(it.handles));
-			SetItemText(row, _runlog, A2W(it.run_log));
-			SetItemText(row, _runtime, A2W(it.run_times));
-			SetItemText(row, _create_time, A2W(it.create_time));
-			SetItemText(row, _mod_time, A2W(it.mod_time));
-			SetItemText(row, _file_size, A2W(it.file_size));
-			SetItemText(row, _version, A2W(it.version));
-			SetItemText(row, _keep_ver, A2W(it.keep_ver));
-			SetItemText(row, _cmd_line, A2W(it.cmd_line));
-			SetItemText(row, _disk_info, A2W(it.disk_info));
+			SetItemText(row, _ip, CString(it.ip));
+			SetItemText(row, _name, CString(it.name));
+			SetItemText(row, _cpu, CString(it.cpu));
+			SetItemText(row, _mem, CString(it.mem));
+			SetItemText(row, _threads, CString(it.threads));
+			SetItemText(row, _handles, CString(it.handles));
+			SetItemText(row, _runlog, CString(it.run_log));
+			SetItemText(row, _runtime, CString(it.run_times));
+			SetItemText(row, _create_time, CString(it.create_time));
+			SetItemText(row, _mod_time, CString(it.mod_time));
+			SetItemText(row, _file_size, CString(it.file_size));
+			SetItemText(row, _version, CString(it.version));
+			SetItemText(row, _keep_ver, CString(it.keep_ver));
+			SetItemText(row, _cmd_line, CString(it.cmd_line));
+			SetItemText(row, _disk_info, CString(it.disk_info));
 			break;
 		}
 	}
@@ -169,13 +189,12 @@ void CAppListCtrl::Clear()
 
 void CAppListCtrl::InsertAppItem(const char* port)
 {
-	USES_CONVERSION;
 	Lock();
 	int n = GetItemCount();
 	CString s;
 	s.Format(_T("%d"), n+1);
 	InsertItem(n, s);
-	SetItemText(n, _no, A2W(port));
+	SetItemText(n, _no, CString(port));
 	Unlock();
 }
 

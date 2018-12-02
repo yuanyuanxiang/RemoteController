@@ -19,6 +19,40 @@ enum UserMsg
 #define COLOR_BLUE1 2050	// 蓝色字体:网络或校时异常
 #define COLOR_BLUE2 2051	// 深蓝:时间差距较大
 
+// 字符串
+class String
+{
+private:
+	int *ref;
+	char *buf;
+	String& operator = (const String &o) { return *this; }
+
+public:
+	explicit String(const int size) : ref(new int(1)), buf(new char[size+1])
+	{
+	}
+	String(const String &o)
+	{
+		ref = o.ref;
+		buf = o.buf;
+		++(*ref);
+	}
+	~String()
+	{
+		if (0 == --(*ref))
+		{
+			delete ref;
+			delete [] buf;
+		}
+	}
+	operator char*() const { return buf; }
+	operator const char*() const { return buf; }
+	char& operator [] (int i) { return buf[i]; }
+};
+
+// 替代W2A函数
+String W_2_A(const CString &wStr);
+
 // CAppListCtrl
 
 class CAppListCtrl : public CListCtrl

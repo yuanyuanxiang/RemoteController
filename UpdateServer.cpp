@@ -51,7 +51,7 @@ int UpdateServer::init(const char *pIp, int nPort)
 		return -2;
 	}
 	// ¼àÌý¶Ë¿Ú
-	if (SOCKET_ERROR == listen(m_Socket, MAX_LISTEN))
+	if (SOCKET_ERROR == listen(m_Socket, MAX_CONNECT))
 	{
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
@@ -84,7 +84,7 @@ void UpdateServer::unInit()
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 	}
-	for (int i = 0; i < MAX_LISTEN; ++i)
+	for (int i = 0; i < MAX_CONNECT; ++i)
 	{
 		if (g_queue[i].s != INVALID_SOCKET)
 		{
@@ -157,9 +157,9 @@ void UpdateServer::CheckIO()
 bool UpdateServer::add_client(SOCKET s)
 {
 	EnterCriticalSection(&m_cs);
-	if (nConnNum < MAX_LISTEN)
+	if (nConnNum < MAX_CONNECT)
 	{
-		for (int i = 0; i < MAX_LISTEN; ++i)
+		for (int i = 0; i < MAX_CONNECT; ++i)
 		{
 			if (g_queue[i].s == INVALID_SOCKET)
 			{
@@ -197,7 +197,7 @@ int UpdateServer::ThisRecvDataProc()
 		FD_ZERO(&fd);
 		FD_SET(m_Socket, &fd);
 		EnterCriticalSection(&m_cs);
-		for (int i = 0; i < MAX_LISTEN; ++i)
+		for (int i = 0; i < MAX_CONNECT; ++i)
 		{
 			if (INVALID_SOCKET != g_queue[i].s)
 			{
@@ -217,7 +217,7 @@ int UpdateServer::ThisRecvDataProc()
 			break;
 		}
 		EnterCriticalSection(&m_cs);
-		for (int i = 0; i < MAX_LISTEN; ++i)
+		for (int i = 0; i < MAX_CONNECT; ++i)
 		{
 			if(INVALID_SOCKET == g_queue[i].s)
 				continue;

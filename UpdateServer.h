@@ -3,7 +3,7 @@
 #include <WinSock2.h>
 #include <process.h>
 
-#define MAX_LISTEN 100
+#define MAX_CONNECT 100
 
 // 请求指令的固定长度
 #define SIZE_1 100
@@ -80,7 +80,7 @@ private:
 	bool m_AcceptThread;			// 线程状态
 	bool m_RecvDataThread;			// 线程状态
 	int nConnNum;					// 连接数
-	SocketInfo g_queue[MAX_LISTEN];	/**< server端处理所有的待决连接 */
+	SocketInfo g_queue[MAX_CONNECT];	/**< server端处理所有的待决连接 */
 	CRITICAL_SECTION m_cs;
 
 	void CheckIO();

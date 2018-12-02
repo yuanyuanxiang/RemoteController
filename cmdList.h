@@ -3,7 +3,7 @@
 // 生成一个控制信令(cmd:arg - 冒号中间没有空格, arg为空表示无参数)
 inline std::string MAKE_CMD(const char *cmd, const char *arg)
 {
-	char buffer[64];
+	char buffer[1024];
 	sprintf_s(buffer, "%s%s%s", cmd, arg ? ":" : "", arg ? arg : "");
 	return buffer;
 }
@@ -39,3 +39,5 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 #define UPDATE			"update"		// 升级程序=>update:a
 
 #define SETTIME			"settime"		// 校时=>settime:年,月,日,时,分,秒
+
+#define NOTICE			"notice"		// 公告=>notice:Infomation

@@ -9,6 +9,7 @@
 #include "IPConfigDlg.h"
 #include "AliveTimeDlg.h"
 #include "UpdateServerDlg.h"
+#include "NoticeDlg.h"
 
 #include <DbgHelp.h>
 #include <io.h>
@@ -43,6 +44,17 @@ long WINAPI whenbuged(_EXCEPTION_POINTERS *excp)
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+#ifdef W2A
+#undef W2A
+#endif
+
+#ifdef USES_CONVERSION
+#undef USES_CONVERSION
+#endif
+
+#define W2A W_2_A
+#define USES_CONVERSION
 
 // 表格的列名
 const CString items[COLUMNS] = { 
@@ -210,6 +222,8 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
 	ON_COMMAND(ID_SET_UPSERVER, &CRemoteControllerDlg::OnSetUpserver)
 	ON_COMMAND(ID_DETECT_TIME_ERROR, &CRemoteControllerDlg::OnDetectTimeError)
 	ON_UPDATE_COMMAND_UI(ID_DETECT_TIME_ERROR, &CRemoteControllerDlg::OnUpdateDetectTimeError)
+	ON_COMMAND(ID_NOTICE, &CRemoteControllerDlg::OnNotice)
+	ON_UPDATE_COMMAND_UI(ID_NOTICE, &CRemoteControllerDlg::OnUpdateNotice)
 END_MESSAGE_MAP()
 
 
@@ -760,4 +774,29 @@ void CRemoteControllerDlg::OnDetectTimeError()
 void CRemoteControllerDlg::OnUpdateDetectTimeError(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bDetectTime);
+}
+
+
+// 向所有选中的客户端发送公告
+void CRemoteControllerDlg::OnNotice()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	CNoticeDlg dlg;
+	if (pos && IDOK == dlg.DoModal() && !dlg.m_strNotice.IsEmpty())
+	{
+		while (pos)
+		{
+			int nRow = m_ListApps.GetNextSelectedItem(pos);
+			CString no = m_ListApps.GetItemText(nRow, _no);
+			USES_CONVERSION;
+			std::string cmd = MAKE_CMD(NOTICE, W2A(dlg.m_strNotice));
+			g_pSocket->SendCommand(cmd.c_str(), W2A(no));
+		}
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateNotice(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

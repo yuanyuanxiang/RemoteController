@@ -91,6 +91,8 @@ public:
 	afx_msg void OnSetUpserver();
 	afx_msg void OnDetectTimeError();
 	afx_msg void OnUpdateDetectTimeError(CCmdUI *pCmdUI);
+	afx_msg void OnNotice();
+	afx_msg void OnUpdateNotice(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

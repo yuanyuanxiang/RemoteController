@@ -115,6 +115,7 @@
     <ClInclude Include="cmdList.h" />
     <ClInclude Include="IPConfigDlg.h" />
     <ClInclude Include="md5driver.hpp" />
+    <ClInclude Include="NoticeDlg.h" />
     <ClInclude Include="RemoteController.h" />
     <ClInclude Include="RemoteControllerDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -132,6 +133,7 @@
     <ClCompile Include="AppListCtrl.cpp" />
     <ClCompile Include="IPConfigDlg.cpp" />
     <ClCompile Include="md5driver.cpp" />
+    <ClCompile Include="NoticeDlg.cpp" />
     <ClCompile Include="RemoteController.cpp" />
     <ClCompile Include="RemoteControllerDlg.cpp" />
     <ClCompile Include="socket\RingBuffer.cpp" />
