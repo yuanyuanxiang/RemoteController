@@ -270,16 +270,20 @@ void SocketInfo::callback(const char *data, int len)
 	}
 }
 
+#pragma comment(lib, "winmm.lib")
+
 UINT WINAPI SocketInfo::ParseDataThread(void *param)
 {
 	OutputDebugStringA("===> ParseDataThread BEGIN\n");
 	SocketInfo *pThis = (SocketInfo *)param;
+	timeBeginPeriod(1);
 	while (INVALID_SOCKET != pThis->s)
 	{
 		pThis->processing();
 		Sleep(SLEEP_TIME);
 	}
 	pThis->flag = false;
+	timeEndPeriod(1);
 	OutputDebugStringA("===> ParseDataThread END\n");
 	return 0xDead999;
 }
@@ -335,6 +339,7 @@ void SocketInfo::processing()
 				if (len > 0)
 					break;
 				size -= once;
+				Sleep(5); // 发送太快客户端可能收不赢
 			} while (size > 0);
 			fclose(fid);
 		}

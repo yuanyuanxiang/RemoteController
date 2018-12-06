@@ -63,6 +63,13 @@ private:
 	int GetAvailabeClient();
 	/// 检查是否有新连接(仅限server)
 	static UINT WINAPI CheckIOThread(LPVOID param);
+	/// 当前目录下所有程序的版本集合
+	std::map<std::string, std::string> m_mapVersion;
+	void GetAllSoftwareVersion();
+
+public:
+	// 检测是否需要更新版本，若需要则返回新版本号
+	std::string CheckUpdate(const char *app) const;
 
 public:
 	CSocketClient *g_fd_ArrayC[MAX_LISTEN];/**< server端处理所有的待决连接 */

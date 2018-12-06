@@ -48,6 +48,7 @@ public:
 	operator char*() const { return buf; }
 	operator const char*() const { return buf; }
 	char& operator [] (int i) { return buf[i]; }
+	const char* tolower() { return _strlwr(buf); }
 };
 
 // Ìæ´úW2Aº¯Êı

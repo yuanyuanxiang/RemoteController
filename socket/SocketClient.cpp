@@ -198,7 +198,20 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		}
 		int aliveTime = atoi(GetValue(parameters, "nAliveTime"));
 		strcpy_s(item.ip, m_chToIp);
-		strcpy_s(item.name, GetValue(parameters, "szName"));
+		strcpy_s(item.version, GetValue(parameters, "szVersion"));
+		if (0 == item.name[0]){
+			strcpy_s(item.name, GetValue(parameters, "szName"));
+			std::string ver = g_pSocket->CheckUpdate(item.name);
+			if (false == ver.empty() && strcmp(ver.c_str(), item.version) > 0)// 检查并提示有新版本
+			{
+				char info[128];
+				sprintf_s(info, "\"%s\"的当前版本为%s, 服务器已经发布新版本。"\
+					"我们将稍后为您更新至版本%s。", item.name, item.version, ver.c_str());
+				std::string cmd = MAKE_CMD(NOTICE, info);
+				sendData(cmd.c_str(), cmd.length());
+				Sleep(10);
+			}
+		}
 		strcpy_s(item.cpu, GetValue(parameters, "szCpu"));
 		strcpy_s(item.mem, GetValue(parameters, "szMem"));
 		strcpy_s(item.threads, GetValue(parameters, "szThreads"));
@@ -208,7 +221,6 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		strcpy_s(item.create_time, GetValue(parameters, "szCreateTime"));
 		strcpy_s(item.mod_time, GetValue(parameters, "szModTime"));
 		strcpy_s(item.file_size, GetValue(parameters, "szFileSize"));
-		strcpy_s(item.version, GetValue(parameters, "szVersion"));
 		if (0 == strcmp("", item.version)) strcpy_s(item.version, "无");
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));

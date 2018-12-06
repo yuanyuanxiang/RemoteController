@@ -340,9 +340,26 @@ void CAppListCtrl::UpdateApp()
 	{
 		TRACE("======> UpdateApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
+		std::vector<CString> v_str;
 		Lock();
 		CString no = GetItemText(m_nIndex, _no);
+		// 检查是否应用程序启动了多份
+		CString ip = GetItemText(m_nIndex, _ip), cmd_line = GetItemText(m_nIndex, _cmd_line);
+		for (int i = 0; i < GetItemCount(); ++i)
+		{
+			if(m_nIndex != i && ip == GetItemText(i, _ip) && cmd_line == GetItemText(i, _cmd_line))
+			{
+				v_str.push_back(GetItemText(i, _no));
+			}
+		}
 		Unlock();
+		// 先把其余程序停止
+		for (int i = 0; i < v_str.size(); ++i)
+		{
+			g_pSocket->SendCommand(PAUSE, W2A(v_str.at(i)));
+			Sleep(50);
+			g_pSocket->SendCommand(STOP, W2A(v_str.at(i)));
+		}
 		char arg[64];
 		sprintf_s(arg, "a,%s", g_MainDlg->m_strUp);
 		std::string cmd = MAKE_CMD(UPDATE, arg);

@@ -41,3 +41,5 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 #define SETTIME			"settime"		// 校时=>settime:年,月,日,时,分,秒
 
 #define NOTICE			"notice"		// 公告=>notice:Infomation
+
+#define PAUSE			"pause"			// 暂停

@@ -14,6 +14,17 @@
 
 #include "..\AppListCtrl.h"
 
+#ifdef W2A
+#undef W2A
+#endif
+
+#ifdef USES_CONVERSION
+#undef USES_CONVERSION
+#endif
+
+#define W2A W_2_A
+#define USES_CONVERSION
+
 extern CAppListCtrl *g_pList;
 
 // CheckIO线程[该线程最多只会启动一次]
@@ -59,6 +70,7 @@ CSocketServer::~CSocketServer()
 int CSocketServer::init(const char *pIp, int nPort, int nType)
 {
 	m_bExit = false;
+	GetAllSoftwareVersion();
 	int ret = CSocketBase::init(pIp, nPort, nType);
 	if(0 == ret)
 		// 开始监听
@@ -66,6 +78,67 @@ int CSocketServer::init(const char *pIp, int nPort, int nType)
 	return ret;
 }
 
+#pragma comment(lib, "version.lib")
+
+// 获取exe文件的版本信息
+std::string GetExeVersion(const CString &exePath)
+{
+	char version[_MAX_PATH] = {0};
+	UINT sz = GetFileVersionInfoSize(exePath, NULL);
+	if (sz)
+	{
+		char *pBuf = new char[sz + 1]();
+		if (GetFileVersionInfo(exePath, NULL, sz, pBuf))
+		{
+			VS_FIXEDFILEINFO *pVsInfo = NULL;
+			if (VerQueryValueA(pBuf, "\\", (void**)&pVsInfo, &sz))
+			{
+				sprintf(version, "%d.%d.%d.%d", 
+					HIWORD(pVsInfo->dwFileVersionMS), 
+					LOWORD(pVsInfo->dwFileVersionMS), 
+					HIWORD(pVsInfo->dwFileVersionLS), 
+					LOWORD(pVsInfo->dwFileVersionLS));
+			}
+		}
+		delete [] pBuf;
+	}
+	return version;
+}
+
+void CSocketServer::GetAllSoftwareVersion()
+{
+	char folder[_MAX_PATH], *p = folder;
+	GetModuleFileNameA(NULL, folder, _MAX_PATH);
+	while(*p) ++p;
+	while('\\' != *p) --p;
+	strcpy(p+1, "*.*");
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(CString(folder));
+	USES_CONVERSION;
+	while (bFind)
+	{
+		bFind = ff.FindNextFile();
+		if (ff.IsDots())continue;
+		if (ff.IsDirectory())
+		{
+			CString name = ff.GetFileName();
+			CString path = ff.GetFilePath() + "\\" + name + ".exe";
+			if (PathFileExists(path))
+			{
+				String app = W2A(name);
+				m_mapVersion.insert(make_pair(app.tolower(), GetExeVersion(path)));
+			}
+		}
+	}
+	ff.Close();
+}
+
+
+std::string CSocketServer::CheckUpdate(const char *app) const
+{
+	std::map<std::string, std::string>::const_iterator fd = m_mapVersion.find(app);
+	return m_mapVersion.end() == fd ? "" : fd->second;
+}
 
 // 反初始化过程：先退出本类线程，清理本类内存，然后调用基类unInit函数
 void CSocketServer::unInit()
