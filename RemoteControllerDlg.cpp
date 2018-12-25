@@ -74,6 +74,7 @@ const CString items[COLUMNS] = {
 	_T("版本"), 
 	_T("Keeper"), 
 	_T("程序位置"),
+	_T("位数"), 
 	_T("磁盘容量")
 };
 
@@ -95,6 +96,7 @@ const int g_Width[COLUMNS] = {
 	80, // 版本
 	80, // 守护程序版本
 	475,// 位置
+	75, // 位数
 	120,// 磁盘容量
 };
 
@@ -119,7 +121,7 @@ const char* GetLocalHost()
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
-class CAboutDlg : public CDialogEx
+class CAboutDlg : public CDialog
 {
 public:
 	CAboutDlg();
@@ -135,16 +137,16 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
+CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
 {
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 
@@ -152,7 +154,7 @@ END_MESSAGE_MAP()
 
 
 CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CRemoteControllerDlg::IDD, pParent)
+	: CDialog(CRemoteControllerDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	strcpy_s(m_strIp, "127.0.0.1");
@@ -182,12 +184,12 @@ CRemoteControllerDlg::~CRemoteControllerDlg()
 
 void CRemoteControllerDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_APPLICATION_LIST, m_ListApps);
 }
 
 
-BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
@@ -231,7 +233,7 @@ END_MESSAGE_MAP()
 
 BOOL CRemoteControllerDlg::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CDialog::OnInitDialog();
 
 	// 将“关于...”菜单项添加到系统菜单中。
 
@@ -311,7 +313,7 @@ void CRemoteControllerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 	else
 	{
-		CDialogEx::OnSysCommand(nID, lParam);
+		CDialog::OnSysCommand(nID, lParam);
 	}
 }
 
@@ -340,7 +342,7 @@ void CRemoteControllerDlg::OnPaint()
 	}
 	else
 	{
-		CDialogEx::OnPaint();
+		CDialog::OnPaint();
 	}
 }
 
@@ -354,7 +356,7 @@ HCURSOR CRemoteControllerDlg::OnQueryDragIcon()
 
 void CRemoteControllerDlg::OnDestroy()
 {
-	CDialogEx::OnDestroy();
+	CDialog::OnDestroy();
 
 	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
 	if (NULL != m_pServer)
@@ -369,7 +371,7 @@ void CRemoteControllerDlg::OnDestroy()
 
 void CRemoteControllerDlg::OnSize(UINT nType, int cx, int cy)
 {
-	CDialogEx::OnSize(nType, cx, cy);
+	CDialog::OnSize(nType, cx, cy);
 
 	if (m_ListApps.GetSafeHwnd())
 	{
@@ -396,7 +398,7 @@ BOOL CRemoteControllerDlg::PreTranslateMessage(MSG* pMsg)
 		(pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN) )
 		return TRUE;
 
-	return CDialogEx::PreTranslateMessage(pMsg);
+	return CDialog::PreTranslateMessage(pMsg);
 }
 
 
@@ -443,6 +445,7 @@ void CRemoteControllerDlg::OnIpconfig()
 			m_pServer->unInit();
 			m_pServer->init(m_strIp, m_nPort, SocketType_Server);
 			m_ListApps.Clear();
+			StartUpServer();
 		}
 	}
 }
@@ -457,7 +460,7 @@ void CRemoteControllerDlg::OnAppAbout()
 
 void CRemoteControllerDlg::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
-	CDialogEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
+	CDialog::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
 	ASSERT(pPopupMenu != NULL);
 	// Check the enabled state of various menu items.
@@ -760,7 +763,10 @@ void CRemoteControllerDlg::StartUpServer()
 		m_pUpServer->unInit();
 		if (m_pUpServer->init(m_strIp, atoi(m_strUp)))
 		{
-			MessageBox(_T("监听指定端口失败!"), _T("错误"), MB_ICONERROR);
+			char err[200];
+			sprintf_s(err, "监听[%s]失败，请进行本地网络配置，\r\n否则程序升级功能无法正常使用。", 
+				m_strIp);
+			MessageBox(CString(err), _T("错误"), MB_ICONERROR);
 		}
 	}
 }

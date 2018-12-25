@@ -4,7 +4,7 @@
 
 // CIPConfigDlg ¶Ô»°¿ò
 
-class CIPConfigDlg : public CDialogEx
+class CIPConfigDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CIPConfigDlg)
 

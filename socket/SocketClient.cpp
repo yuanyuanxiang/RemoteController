@@ -224,6 +224,7 @@ void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
 		if (0 == strcmp("", item.version)) strcpy_s(item.version, "нч");
 		strcpy_s(item.keep_ver, GetValue(parameters, "szKeeperVer"));
 		strcpy_s(item.cmd_line, GetValue(parameters, "szCmdLine"));
+		strcpy_s(item.bits, GetValue(parameters, "bits"));
 		strcpy_s(item.disk_info, GetValue(parameters, "szDiskFreeSpace"));
 		const char *status = GetValue(parameters, "szStatus");
 		strcpy_s(item.status, status);

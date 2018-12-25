@@ -20,6 +20,7 @@ enum _Column
 	_version,	// 版本
 	_keep_ver,  // 守护程序版本
 	_cmd_line,	// 命令行（程序位置）
+	_b32_64bits,// 32位或64位
 	_disk_info, // 磁盘剩余空间（Gb）
 	COLUMNS, 
 };
@@ -43,6 +44,7 @@ public:
 	char keep_ver[64];	// 守护程序版本
 	char cmd_line[_MAX_PATH]; // 命令行
 	char status[64];	// 运行状态
+	char bits[16];		// 32或64位
 	char disk_info[64]; // 磁盘状态
 
 public:

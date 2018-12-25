@@ -4,7 +4,7 @@
 
 // CAliveTimeDlg ¶Ô»°¿ò
 
-class CAliveTimeDlg : public CDialogEx
+class CAliveTimeDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CAliveTimeDlg)
 

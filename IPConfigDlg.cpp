@@ -9,10 +9,10 @@
 
 // CIPConfigDlg ¶Ô»°¿ò
 
-IMPLEMENT_DYNAMIC(CIPConfigDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CIPConfigDlg, CDialog)
 
 CIPConfigDlg::CIPConfigDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CIPConfigDlg::IDD, pParent)
+	: CDialog(CIPConfigDlg::IDD, pParent)
 	, m_strIpAddr(_T(""))
 	, m_nPort(9999)
 {
@@ -25,7 +25,7 @@ CIPConfigDlg::~CIPConfigDlg()
 
 void CIPConfigDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_IPADDR, m_IpAddr);
 	DDX_Control(pDX, IDC_EDIT_IPPORT, m_Port);
 	DDX_Text(pDX, IDC_EDIT_IPADDR, m_strIpAddr);
@@ -34,7 +34,7 @@ void CIPConfigDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CIPConfigDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CIPConfigDlg, CDialog)
 END_MESSAGE_MAP()
 
 

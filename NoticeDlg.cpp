@@ -9,10 +9,10 @@
 
 // CNoticeDlg 对话框
 
-IMPLEMENT_DYNAMIC(CNoticeDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CNoticeDlg, CDialog)
 
 CNoticeDlg::CNoticeDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CNoticeDlg::IDD, pParent)
+	: CDialog(CNoticeDlg::IDD, pParent)
 	, m_strNotice(_T(""))
 {
 
@@ -24,12 +24,12 @@ CNoticeDlg::~CNoticeDlg()
 
 void CNoticeDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_NOTICE, m_strNotice);
 }
 
 
-BEGIN_MESSAGE_MAP(CNoticeDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CNoticeDlg, CDialog)
 END_MESSAGE_MAP()
 
 
@@ -38,7 +38,7 @@ END_MESSAGE_MAP()
 
 BOOL CNoticeDlg::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CDialog::OnInitDialog();
 
 	CEdit *pEdit = (CEdit*)GetDlgItem(IDC_EDIT_NOTICE);
 	// 最多输入100个字

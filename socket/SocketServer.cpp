@@ -13,6 +13,7 @@
 #include <process.h>
 
 #include "..\AppListCtrl.h"
+#include <io.h>
 
 #ifdef W2A
 #undef W2A
@@ -114,6 +115,7 @@ void CSocketServer::GetAllSoftwareVersion()
 	strcpy(p+1, "*.*");
 	CFileFind ff;
 	BOOL bFind = ff.FindFile(CString(folder));
+	// 获取全部文件，并获取每个可执行文件版本
 	USES_CONVERSION;
 	while (bFind)
 	{
@@ -127,12 +129,51 @@ void CSocketServer::GetAllSoftwareVersion()
 			{
 				String app = W2A(name);
 				m_mapVersion.insert(make_pair(app.tolower(), GetExeVersion(path)));
+				CheckFilelist(ff.GetFilePath());
 			}
 		}
 	}
 	ff.Close();
 }
 
+
+void CSocketServer::CheckFilelist(const CString &folder)
+{
+	CFileFind ff;
+	CString filter = folder + _T("\\*.*");
+	BOOL bFind = ff.FindFile(filter);
+	std::vector<CString> v_AllFiles;
+	USES_CONVERSION;
+	while (bFind)
+	{
+		bFind = ff.FindNextFile();
+		if (ff.IsDots() || ff.IsDirectory())continue;
+		else
+		{
+			CString name = ff.GetFileName();
+			int n = name.Find(L".conf", 0); // 排除配置文件
+			if (name != L"filelist.txt" && n == -1)
+			{
+				v_AllFiles.push_back(name);
+			}
+		}
+	}
+	ff.Close();
+
+	CString file(folder + _T("\\filelist.txt"));
+	FILE *filelist = NULL;
+	if (filelist = fopen(W2A(file), "wb"))
+	{
+		for (std::vector<CString>::const_iterator itor = v_AllFiles.begin(); 
+			itor != v_AllFiles.end(); ++itor)
+		{
+			String cur = W2A(*itor);
+			fwrite(cur, 1, strlen(cur), filelist);
+			fwrite("\r\n", 1, 2, filelist);
+		}
+		fclose(filelist);
+	}
+}
 
 std::string CSocketServer::CheckUpdate(const char *app) const
 {
@@ -321,6 +362,13 @@ int CSocketServer::CheckIO()
 			MY_LOG(str);
 			return ERROR_ACCEPT;
 		}
+		/// 检测端口是否已占用，端口作为报表的关键字，不得重复
+		if(!CanAccept(ntohs(addrClient.sin_port)))
+		{
+			closesocket(m_Socket);
+			m_Socket = INVALID_SOCKET;
+			return ERROR_PORTERROR;
+		}
 		bool bFull = false;
 		/// 新的连接可以使用，查看待决处理队列
 		int idx = GetAvailabeClient();
@@ -364,4 +412,21 @@ int CSocketServer::GetAvailabeClient()
 	}
 	Unlock();
 	return idx;
+}
+
+// 指定端口是否已存在，不存在则允许接入，返回true
+bool CSocketServer::CanAccept(int port)
+{
+	bool can = true;
+	Lock();
+	for (int nLoopi = 0; nLoopi < MAX_LISTEN; ++nLoopi)
+	{
+		if (g_fd_ArrayC[nLoopi] && port == g_fd_ArrayC[nLoopi]->GetSrcPort())
+		{
+			can = false;
+			break;
+		}
+	}
+	Unlock();
+	return can;
 }

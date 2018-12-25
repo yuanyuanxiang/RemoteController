@@ -7,8 +7,13 @@
 #undef MAX_LISTEN
 #endif
 
+#ifdef _DEBUG
 /// 最大监听客户端数
 #define MAX_LISTEN 64
+#else
+#define MAX_LISTEN 256
+#endif
+
 /// 默认缓冲区大小
 #define DEFAULT_BUFFER 256
 
@@ -37,6 +42,7 @@ enum
 	ERROR_ACCEPT,		/// accept() error
 	ERROR_CLIENTFULL,	/// 连接已满
 	ERROR_TYPEERROR,	/// init() type error
+	ERROR_PORTERROR,	/// port已被占用
 	ERROR_MAX
 };
 

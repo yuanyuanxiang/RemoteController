@@ -156,6 +156,7 @@ void CAppListCtrl::UpdateAppItem(const char* port, const AppInfo &it)
 			SetItemText(row, _version, CString(it.version));
 			SetItemText(row, _keep_ver, CString(it.keep_ver));
 			SetItemText(row, _cmd_line, CString(it.cmd_line));
+			SetItemText(row, _b32_64bits, CString(it.bits));
 			SetItemText(row, _disk_info, CString(it.disk_info));
 			break;
 		}

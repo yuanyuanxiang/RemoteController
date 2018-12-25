@@ -9,10 +9,10 @@
 
 // CAliveTimeDlg ¶Ô»°¿ò
 
-IMPLEMENT_DYNAMIC(CAliveTimeDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CAliveTimeDlg, CDialog)
 
 CAliveTimeDlg::CAliveTimeDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CAliveTimeDlg::IDD, pParent)
+	: CDialog(CAliveTimeDlg::IDD, pParent)
 	, m_nAliveTime(0)
 {
 
@@ -24,14 +24,14 @@ CAliveTimeDlg::~CAliveTimeDlg()
 
 void CAliveTimeDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_ALIVETIME, m_EditAliveTime);
 	DDX_Text(pDX, IDC_EDIT_ALIVETIME, m_nAliveTime);
 	DDV_MinMaxInt(pDX, m_nAliveTime, 1, 3600);
 }
 
 
-BEGIN_MESSAGE_MAP(CAliveTimeDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CAliveTimeDlg, CDialog)
 END_MESSAGE_MAP()
 
 

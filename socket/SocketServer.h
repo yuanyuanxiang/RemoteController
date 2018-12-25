@@ -61,11 +61,14 @@ private:
 	int CheckIO();
 	// 获取可用的Client
 	int GetAvailabeClient();
+	bool CanAccept(int port);
 	/// 检查是否有新连接(仅限server)
 	static UINT WINAPI CheckIOThread(LPVOID param);
 	/// 当前目录下所有程序的版本集合
 	std::map<std::string, std::string> m_mapVersion;
 	void GetAllSoftwareVersion();
+	// 自动生成升级文件列表"filelist.txt"
+	void CheckFilelist(const CString &folder);
 
 public:
 	// 检测是否需要更新版本，若需要则返回新版本号

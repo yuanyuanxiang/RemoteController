@@ -13,6 +13,9 @@
 #include "vld.h"
 #endif
 
+// 移除对话框中MFC控件的支持，减小静态编译程序的大小
+#define _AFX_NO_MFC_CONTROLS_IN_DIALOGS
+
 #include "targetver.h"
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 某些 CString 构造函数将是显式的

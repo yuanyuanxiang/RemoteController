@@ -51,7 +51,7 @@ BOOL CRemoteControllerApp::InitInstance()
 
 	CWinApp::InitInstance();
 
-
+#ifndef _AFX_NO_MFC_CONTROLS_IN_DIALOGS
 	AfxEnableControlContainer();
 
 	// 创建 shell 管理器，以防对话框包含
@@ -60,6 +60,7 @@ BOOL CRemoteControllerApp::InitInstance()
 
 	// 激活“Windows Native”视觉管理器，以便在 MFC 控件中启用主题
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
+#endif
 
 	// 标准初始化
 	// 如果未使用这些功能并希望减小
@@ -89,11 +90,13 @@ BOOL CRemoteControllerApp::InitInstance()
 		TRACE(traceAppMsg, 0, "警告: 如果您在对话框上使用 MFC 控件，则无法 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS。\n");
 	}
 
+#ifndef _AFX_NO_MFC_CONTROLS_IN_DIALOGS
 	// 删除上面创建的 shell 管理器。
 	if (pShellManager != NULL)
 	{
 		delete pShellManager;
 	}
+#endif
 
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。

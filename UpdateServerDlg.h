@@ -4,7 +4,7 @@
 
 // CUpdateServerDlg ¶Ô»°¿ò
 
-class CUpdateServerDlg : public CDialogEx
+class CUpdateServerDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CUpdateServerDlg)
 

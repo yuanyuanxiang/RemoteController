@@ -15,7 +15,7 @@ extern CSocketServer *g_pSocket;
 extern const int g_Width[COLUMNS];
 
 // CRemoteControllerDlg 对话框
-class CRemoteControllerDlg : public CDialogEx
+class CRemoteControllerDlg : public CDialog
 {
 // 构造
 public:

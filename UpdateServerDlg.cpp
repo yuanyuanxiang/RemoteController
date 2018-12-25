@@ -9,10 +9,10 @@
 
 // CUpdateServerDlg ¶Ô»°¿ò
 
-IMPLEMENT_DYNAMIC(CUpdateServerDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CUpdateServerDlg, CDialog)
 
 CUpdateServerDlg::CUpdateServerDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CUpdateServerDlg::IDD, pParent)
+	: CDialog(CUpdateServerDlg::IDD, pParent)
 	, m_strUpServer(_T(""))
 {
 
@@ -24,14 +24,14 @@ CUpdateServerDlg::~CUpdateServerDlg()
 
 void CUpdateServerDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_SERVER, m_EditUpServer);
 	DDX_Text(pDX, IDC_EDIT_SERVER, m_strUpServer);
 	DDV_MaxChars(pDX, m_strUpServer, 52);
 }
 
 
-BEGIN_MESSAGE_MAP(CUpdateServerDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CUpdateServerDlg, CDialog)
 END_MESSAGE_MAP()
 
 

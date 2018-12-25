@@ -4,7 +4,7 @@
 
 // CNoticeDlg ¶Ô»°¿ò
 
-class CNoticeDlg : public CDialogEx
+class CNoticeDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CNoticeDlg)
 
