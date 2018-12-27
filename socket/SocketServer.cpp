@@ -282,6 +282,19 @@ void CSocketServer::SetAliveTime(int msg, const char *id)
 }
 
 
+std::string CSocketServer::getVersion(const std::string &name)
+{
+	char path[_MAX_PATH], *p = path;
+	GetModuleFileNameA(NULL, path, _MAX_PATH);
+	while(*p) ++p;
+	while('\\' != *p) --p;
+	sprintf(p+1, "%s\\%s.exe", name.c_str(), name.c_str());
+	std::string ver = GetExeVersion(CString(path));
+	if (m_mapVersion.find(name) == m_mapVersion.end())
+		m_mapVersion.insert(make_pair(name, ver));
+	return ver;
+}
+
 // 是否在容器中已存在该IP
 bool IsExist(const std::string &ip, const std::vector<std::string> &v)
 {

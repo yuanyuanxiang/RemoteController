@@ -3,7 +3,11 @@
 #include <WinSock2.h>
 #include <process.h>
 
+#ifdef _DEBUG
 #define MAX_CONNECT 100
+#else
+#define MAX_CONNECT 256
+#endif
 
 // 请求指令的固定长度
 #define SIZE_1 100

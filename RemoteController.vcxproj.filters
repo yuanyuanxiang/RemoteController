@@ -66,14 +66,14 @@
     <ClInclude Include="UpdateServerDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="UpdateServer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="md5driver.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NoticeDlg.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateServer.h">
+      <Filter>socket</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -110,14 +110,14 @@
     <ClCompile Include="UpdateServerDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="UpdateServer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="md5driver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="NoticeDlg.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateServer.cpp">
+      <Filter>socket</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

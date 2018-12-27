@@ -346,6 +346,17 @@ void CAppListCtrl::UpdateApp()
 		CString no = GetItemText(m_nIndex, _no);
 		// 检查是否应用程序启动了多份
 		CString ip = GetItemText(m_nIndex, _ip), cmd_line = GetItemText(m_nIndex, _cmd_line);
+		// 升级时检查目标程序版本是否大于本地文件
+		CString name = GetItemText(m_nIndex, _name);
+		std::string ver = g_pSocket->getVersion(std::string(W2A(name)));
+		if (strcmp(W2A(GetItemText(m_nIndex, _version)), ver.c_str()) >= 0)
+		{
+			Unlock();
+			if (!name.IsEmpty())
+				MessageBox(_T("目标程序已是最新，不予升级!\r\n请检查本地程序版本是否更新。"), 
+				_T("提示"), MB_ICONINFORMATION | MB_OK);
+			return;
+		}
 		for (int i = 0; i < GetItemCount(); ++i)
 		{
 			if(m_nIndex != i && ip == GetItemText(i, _ip) && cmd_line == GetItemText(i, _cmd_line))

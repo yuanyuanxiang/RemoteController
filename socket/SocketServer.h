@@ -53,6 +53,9 @@ public:
 
 	void Unlock() { LeaveCriticalSection(&m_cs); }
 
+	// 获取程序版本并加入版本表格
+	std::string getVersion(const std::string &name);
+
 private:
 	bool m_bExit;		/**< 是否退出程序 */
 	bool m_bIsListen;	/**< 是否开启监听线程 */
