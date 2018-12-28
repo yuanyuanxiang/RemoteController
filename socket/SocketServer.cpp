@@ -128,7 +128,9 @@ void CSocketServer::GetAllSoftwareVersion()
 			if (PathFileExists(path))
 			{
 				String app = W2A(name);
+				Lock();
 				m_mapVersion.insert(make_pair(app.tolower(), GetExeVersion(path)));
+				Unlock();
 				CheckFilelist(ff.GetFilePath());
 			}
 		}
@@ -175,10 +177,13 @@ void CSocketServer::CheckFilelist(const CString &folder)
 	}
 }
 
-std::string CSocketServer::CheckUpdate(const char *app) const
+std::string CSocketServer::CheckUpdate(const char *app)
 {
+	Lock();
 	std::map<std::string, std::string>::const_iterator fd = m_mapVersion.find(app);
-	return m_mapVersion.end() == fd ? "" : fd->second;
+	std::string ver = m_mapVersion.end() == fd ? "" : fd->second;
+	Unlock();
+	return ver;
 }
 
 // 反初始化过程：先退出本类线程，清理本类内存，然后调用基类unInit函数
@@ -290,8 +295,9 @@ std::string CSocketServer::getVersion(const std::string &name)
 	while('\\' != *p) --p;
 	sprintf(p+1, "%s\\%s.exe", name.c_str(), name.c_str());
 	std::string ver = GetExeVersion(CString(path));
-	if (m_mapVersion.find(name) == m_mapVersion.end())
-		m_mapVersion.insert(make_pair(name, ver));
+	Lock();
+	m_mapVersion[name] = ver;
+	Unlock();
 	return ver;
 }
 

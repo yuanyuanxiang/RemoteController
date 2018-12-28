@@ -75,7 +75,7 @@ private:
 
 public:
 	// 检测是否需要更新版本，若需要则返回新版本号
-	std::string CheckUpdate(const char *app) const;
+	std::string CheckUpdate(const char *app);
 
 public:
 	CSocketClient *g_fd_ArrayC[MAX_LISTEN];/**< server端处理所有的待决连接 */

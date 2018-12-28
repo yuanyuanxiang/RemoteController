@@ -32,6 +32,7 @@ public:
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
 	bool m_bDetectTime;			// 检测系统时差
+	bool m_bAllowDebug;			// 允许程序降级
 	CString m_sPicPath;			// 存放图片的目录
 	CSocketServer *m_pServer;	// socket 服务端
 	UpdateServer *m_pUpServer;	// 本机升级服务器
@@ -93,6 +94,8 @@ public:
 	afx_msg void OnUpdateDetectTimeError(CCmdUI *pCmdUI);
 	afx_msg void OnNotice();
 	afx_msg void OnUpdateNotice(CCmdUI *pCmdUI);
+	afx_msg void OnAllowDebug();
+	afx_msg void OnUpdateAllowDebug(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

@@ -349,10 +349,10 @@ void CAppListCtrl::UpdateApp()
 		// 升级时检查目标程序版本是否大于本地文件
 		CString name = GetItemText(m_nIndex, _name);
 		std::string ver = g_pSocket->getVersion(std::string(W2A(name)));
-		if (strcmp(W2A(GetItemText(m_nIndex, _version)), ver.c_str()) >= 0)
+		if (!g_MainDlg->m_bAllowDebug && strcmp(W2A(GetItemText(m_nIndex, _version)), ver.c_str()) >= 0)
 		{
 			Unlock();
-			if (!name.IsEmpty())
+			if (!name.IsEmpty() && !g_MainDlg->m_bAllowDebug)
 				MessageBox(_T("目标程序已是最新，不予升级!\r\n请检查本地程序版本是否更新。"), 
 				_T("提示"), MB_ICONINFORMATION | MB_OK);
 			return;
@@ -375,7 +375,13 @@ void CAppListCtrl::UpdateApp()
 		char arg[64];
 		sprintf_s(arg, "a,%s", g_MainDlg->m_strUp);
 		std::string cmd = MAKE_CMD(UPDATE, arg);
-		g_pSocket->SendCommand(cmd.c_str(), W2A(no));
+		String c_no = W2A(no);
+		if(g_MainDlg->m_bAllowDebug)
+		{
+			g_pSocket->SendCommand(ALLOW_DEBUG, c_no);
+			g_MainDlg->m_bAllowDebug = false;
+		}
+		g_pSocket->SendCommand(cmd.c_str(), c_no);
 	}
 }
 

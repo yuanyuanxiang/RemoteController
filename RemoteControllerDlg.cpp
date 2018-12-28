@@ -163,6 +163,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 	m_pServer = NULL;
 	m_bAdvanced = false;
 	m_bDetectTime = true;
+	m_bAllowDebug = false;
 	InitializeCriticalSection(&m_cs);
 	g_MainDlg = this;
 	memset(m_strUp, 0, sizeof(m_strUp));
@@ -226,6 +227,8 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_DETECT_TIME_ERROR, &CRemoteControllerDlg::OnUpdateDetectTimeError)
 	ON_COMMAND(ID_NOTICE, &CRemoteControllerDlg::OnNotice)
 	ON_UPDATE_COMMAND_UI(ID_NOTICE, &CRemoteControllerDlg::OnUpdateNotice)
+	ON_COMMAND(ID_ALLOW_DEBUG, &CRemoteControllerDlg::OnAllowDebug)
+	ON_UPDATE_COMMAND_UI(ID_ALLOW_DEBUG, &CRemoteControllerDlg::OnUpdateAllowDebug)
 END_MESSAGE_MAP()
 
 
@@ -583,6 +586,11 @@ void CRemoteControllerDlg::OnUpdate()
 	if (IDYES == MessageBox(_T("确定升级全部的守护程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
 		std::string cmd = MAKE_CMD(UPDATE, m_strUp);
+		if(m_bAllowDebug)
+		{
+			g_pSocket->SendCommand(ALLOW_DEBUG);
+			m_bAllowDebug = false;
+		}
 		g_pSocket->SendCommand(cmd.c_str());
 	}
 }
@@ -646,7 +654,13 @@ void CRemoteControllerDlg::OnUpdateSingle()
 			CString no = m_ListApps.GetItemText(nRow, _no);
 			USES_CONVERSION;
 			std::string cmd = MAKE_CMD(UPDATE, m_strUp);
-			g_pSocket->SendCommand(cmd.c_str(), W2A(no));
+			String c_no = W2A(no);
+			if(m_bAllowDebug)
+			{
+				g_pSocket->SendCommand(ALLOW_DEBUG, c_no);
+				m_bAllowDebug = false;
+			}
+			g_pSocket->SendCommand(cmd.c_str(), c_no);
 		}
 	}
 }
@@ -805,4 +819,21 @@ void CRemoteControllerDlg::OnNotice()
 void CRemoteControllerDlg::OnUpdateNotice(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+// 允许对远程程序进行降级操作
+void CRemoteControllerDlg::OnAllowDebug()
+{
+	if (false == m_bAllowDebug && IDOK == MessageBox(_T("允许对远程程序进行降级操作?"), 
+		_T("警告"), MB_ICONWARNING | MB_OKCANCEL))
+	{
+		m_bAllowDebug = true;
+	}else 
+		m_bAllowDebug = false;
+}
+
+
+void CRemoteControllerDlg::OnUpdateAllowDebug(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bAllowDebug);
 }

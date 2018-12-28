@@ -43,3 +43,5 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 #define NOTICE			"notice"		// 公告=>notice:Infomation
 
 #define PAUSE			"pause"			// 暂停
+
+#define ALLOW_DEBUG		"debug"			// 允许应用程序降级
