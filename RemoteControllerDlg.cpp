@@ -10,6 +10,8 @@
 #include "AliveTimeDlg.h"
 #include "UpdateServerDlg.h"
 #include "NoticeDlg.h"
+#include "DlgSetRemoteIP.h"
+#include "DlgSetRemotePort.h"
 
 #include <DbgHelp.h>
 #include <io.h>
@@ -178,6 +180,7 @@ CRemoteControllerDlg::~CRemoteControllerDlg()
 		delete m_pUpServer;
 		m_pUpServer = NULL;
 	}
+	Sleep(200);
 	WSACleanup();
 	DeleteCriticalSection(&m_cs);
 }
@@ -229,6 +232,10 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_NOTICE, &CRemoteControllerDlg::OnUpdateNotice)
 	ON_COMMAND(ID_ALLOW_DEBUG, &CRemoteControllerDlg::OnAllowDebug)
 	ON_UPDATE_COMMAND_UI(ID_ALLOW_DEBUG, &CRemoteControllerDlg::OnUpdateAllowDebug)
+	ON_COMMAND(ID_SET_REMOTEIP, &CRemoteControllerDlg::OnSetRemoteip)
+	ON_UPDATE_COMMAND_UI(ID_SET_REMOTEIP, &CRemoteControllerDlg::OnUpdateSetRemoteip)
+	ON_COMMAND(ID_SET_REMOTEPORT, &CRemoteControllerDlg::OnSetRemoteport)
+	ON_UPDATE_COMMAND_UI(ID_SET_REMOTEPORT, &CRemoteControllerDlg::OnUpdateSetRemoteport)
 END_MESSAGE_MAP()
 
 
@@ -590,6 +597,7 @@ void CRemoteControllerDlg::OnUpdate()
 		{
 			g_pSocket->SendCommand(ALLOW_DEBUG);
 			m_bAllowDebug = false;
+			Sleep(50);
 		}
 		g_pSocket->SendCommand(cmd.c_str());
 	}
@@ -659,6 +667,7 @@ void CRemoteControllerDlg::OnUpdateSingle()
 			{
 				g_pSocket->SendCommand(ALLOW_DEBUG, c_no);
 				m_bAllowDebug = false;
+				Sleep(50);
 			}
 			g_pSocket->SendCommand(cmd.c_str(), c_no);
 		}
@@ -775,11 +784,12 @@ void CRemoteControllerDlg::StartUpServer()
 		if(NULL == m_pUpServer)
 			m_pUpServer = new UpdateServer();
 		m_pUpServer->unInit();
-		if (m_pUpServer->init(m_strIp, atoi(m_strUp)))
+		int n = m_pUpServer->init(m_strIp, atoi(m_strUp));
+		if (n)
 		{
 			char err[200];
-			sprintf_s(err, "监听[%s]失败，请进行本地网络配置，\r\n否则程序升级功能无法正常使用。", 
-				m_strIp);
+			sprintf_s(err, "监听[%s]失败，请进行本地网络配置，\r\n否则程序升级功能无法正常使用。[错误码: %d]", 
+				m_strIp, n);
 			MessageBox(CString(err), _T("错误"), MB_ICONERROR);
 		}
 	}
@@ -836,4 +846,56 @@ void CRemoteControllerDlg::OnAllowDebug()
 void CRemoteControllerDlg::OnUpdateAllowDebug(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bAllowDebug);
+}
+
+
+void CRemoteControllerDlg::OnSetRemoteip()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	CDlgSetRemoteIP dlg;
+	CString ip = dlg.m_strIP = m_strIp;
+	if (pos && IDOK == dlg.DoModal() && ip != dlg.m_strIP)
+	{
+		while (pos)
+		{
+			int nRow = m_ListApps.GetNextSelectedItem(pos);
+			CString no = m_ListApps.GetItemText(nRow, _no);
+			USES_CONVERSION;
+			std::string cmd = MAKE_CMD(SETIP, W2A(dlg.m_strIP));
+			g_pSocket->SendCommand(cmd.c_str(), W2A(no));
+		}
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateSetRemoteip(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnSetRemoteport()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	CDlgSetRemotePort dlg;
+	int nPort = dlg.m_nPort = m_nPort;
+	if (pos && IDOK == dlg.DoModal() && nPort != dlg.m_nPort)
+	{
+		while (pos)
+		{
+			int nRow = m_ListApps.GetNextSelectedItem(pos);
+			CString no = m_ListApps.GetItemText(nRow, _no);
+			USES_CONVERSION;
+			char buf[8];
+			_itoa(dlg.m_nPort, buf, 10);
+			std::string cmd = MAKE_CMD(SETPORT, buf);
+			g_pSocket->SendCommand(cmd.c_str(), W2A(no));
+		}
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateSetRemoteport(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

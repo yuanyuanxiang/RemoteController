@@ -96,6 +96,10 @@ public:
 	afx_msg void OnUpdateNotice(CCmdUI *pCmdUI);
 	afx_msg void OnAllowDebug();
 	afx_msg void OnUpdateAllowDebug(CCmdUI *pCmdUI);
+	afx_msg void OnSetRemoteip();
+	afx_msg void OnUpdateSetRemoteip(CCmdUI *pCmdUI);
+	afx_msg void OnSetRemoteport();
+	afx_msg void OnUpdateSetRemoteport(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

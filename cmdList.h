@@ -45,3 +45,7 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 #define PAUSE			"pause"			// 暂停
 
 #define ALLOW_DEBUG		"debug"			// 允许应用程序降级
+
+#define SETIP			"setip"			// 更改守护程序远程IP=>setip:IP
+
+#define SETPORT			"setport"		// 更改守护程序远程端口=>setport:PORT

@@ -413,6 +413,7 @@ int CSocketServer::CheckIO()
 int CSocketServer::GetAvailabeClient()
 {
 	int idx = -1;
+	std::vector<CSocketClient *> bDel; // 已失联的客户端
 	Lock();
 	for (int nLoopi = 0; nLoopi < MAX_LISTEN; ++nLoopi)
 	{
@@ -420,9 +421,7 @@ int CSocketServer::GetAvailabeClient()
 		{
 			if (g_fd_ArrayC[nLoopi])
 			{
-				g_pList->PostMessage(MSG_DeleteApp, g_fd_ArrayC[nLoopi]->GetSrcPort());
-				g_fd_ArrayC[nLoopi]->unInit();
-				g_fd_ArrayC[nLoopi]->Destroy();
+				bDel.push_back(g_fd_ArrayC[nLoopi]);
 				g_fd_ArrayC[nLoopi] = NULL;
 			}
 			idx = nLoopi;
@@ -430,6 +429,13 @@ int CSocketServer::GetAvailabeClient()
 		}
 	}
 	Unlock();
+	for (std::vector<CSocketClient *>::const_iterator iter = bDel.begin(); iter != bDel.end(); ++iter)
+	{
+		CSocketClient *cur = *iter;
+		g_pList->PostMessage(MSG_DeleteApp, cur->GetSrcPort());
+		cur->unInit();
+		cur->Destroy();
+	}
 	return idx;
 }
 

@@ -37,6 +37,8 @@ int UpdateServer::init(const char *pIp, int nPort)
 	// 接收缓冲区
 	const int nRecvBuf = 1024 * 1024 * 2;
 	::setsockopt(m_Socket, SOL_SOCKET, SO_RCVBUF, (const char*)&nRecvBuf, sizeof(int));
+	bool bConditionalAccept = true;
+	::setsockopt(m_Socket, SOL_SOCKET, SO_CONDITIONAL_ACCEPT, (const char *)&bConditionalAccept, sizeof(bool));
 
 	sockaddr_in m_in;
 	m_in.sin_family = AF_INET;
@@ -48,6 +50,9 @@ int UpdateServer::init(const char *pIp, int nPort)
 	{
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
+		char buf[256];
+		sprintf_s(buf, "======> 绑定端口[%d]失败, GetLastError= %d\n", nPort, WSAGetLastError());
+		OutputDebugStringA(buf);
 		return -2;
 	}
 	// 监听端口
@@ -55,6 +60,9 @@ int UpdateServer::init(const char *pIp, int nPort)
 	{
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
+		char buf[256];
+		sprintf_s(buf, "======> 监听端口[%d]失败, GetLastError= %d\n", nPort, WSAGetLastError());
+		OutputDebugStringA(buf);
 		return -3;
 	}
 	// 非阻塞模式设定
@@ -63,6 +71,9 @@ int UpdateServer::init(const char *pIp, int nPort)
 	{
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
+		char buf[256];
+		sprintf_s(buf, "======> 非阻塞模式设置失败, GetLastError= %d\n", nPort, WSAGetLastError());
+		OutputDebugStringA(buf);
 		return -4;
 	}
 	m_bExit = false;
@@ -79,17 +90,17 @@ void UpdateServer::unInit()
 	m_bExit = true;
 	while (m_AcceptThread || m_RecvDataThread)
 		Sleep(10);
-	if (INVALID_SOCKET != m_Socket)
-	{
-		closesocket(m_Socket);
-		m_Socket = INVALID_SOCKET;
-	}
 	for (int i = 0; i < MAX_CONNECT; ++i)
 	{
 		if (g_queue[i].s != INVALID_SOCKET)
 		{
 			g_queue[i].exit();
 		}
+	}
+	if (INVALID_SOCKET != m_Socket)
+	{
+		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 	}
 }
 

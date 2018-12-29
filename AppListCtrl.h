@@ -3,6 +3,7 @@
 #include "socket\SocketClient.h"
 #include "AppInfo.h"
 #include "cmdList.h"
+#include <map>
 
 // 用户自定义消息
 enum UserMsg
@@ -49,10 +50,13 @@ public:
 	operator const char*() const { return buf; }
 	char& operator [] (int i) { return buf[i]; }
 	const char* tolower() { return _strlwr(buf); }
+	const char* c_str() const { return buf; }
 };
 
 // 替代W2A函数
 String W_2_A(const CString &wStr);
+
+#define MENU_COUNT 6
 
 // CAppListCtrl
 
@@ -61,6 +65,8 @@ class CAppListCtrl : public CListCtrl
 	DECLARE_DYNAMIC(CAppListCtrl)
 
 	int m_nIndex;		// 当前选中行
+
+	std::map<int, int> m_MapStat; // 各个菜单状态
 
 public:
 	CAppListCtrl();
@@ -110,4 +116,6 @@ public:
 	afx_msg LRESULT MessageDeleteApp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT MessageChangeColor(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnOpRemote();
+	afx_msg void OnUpdateOpRemote(CCmdUI *pCmdUI);
 };

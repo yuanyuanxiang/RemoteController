@@ -114,6 +114,8 @@
     <ClInclude Include="AppInfo.h" />
     <ClInclude Include="AppListCtrl.h" />
     <ClInclude Include="cmdList.h" />
+    <ClInclude Include="DlgSetRemoteIP.h" />
+    <ClInclude Include="DlgSetRemotePort.h" />
     <ClInclude Include="IPConfigDlg.h" />
     <ClInclude Include="md5driver.hpp" />
     <ClInclude Include="NoticeDlg.h" />
@@ -132,6 +134,8 @@
   <ItemGroup>
     <ClCompile Include="AliveTimeDlg.cpp" />
     <ClCompile Include="AppListCtrl.cpp" />
+    <ClCompile Include="DlgSetRemoteIP.cpp" />
+    <ClCompile Include="DlgSetRemotePort.cpp" />
     <ClCompile Include="IPConfigDlg.cpp" />
     <ClCompile Include="md5driver.cpp" />
     <ClCompile Include="NoticeDlg.cpp" />

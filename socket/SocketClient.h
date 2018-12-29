@@ -51,14 +51,10 @@ private:
 	}
 
 	/// 解析MU消息
-	void ParseData()
-	{
-		if (m_RingBuffer->GetXml(m_RecvBuffer, &m_bExit))
-			ReadSipXmlInfo(m_RecvBuffer, m_RingBuffer->GetSipXmlLength());
-	}
+	void ParseData(char *cSipBuf, char *cXmlBuf);
 
 	// 读取SipXml
-	void ReadSipXmlInfo(const char *buffer, int nLen);
+	void ReadSipXmlInfo(const char *xml);
 
 protected:
 	~CSocketClient(void); // 只能通过new产生本类对象
@@ -73,6 +69,8 @@ public:
 
 	// 设置心跳周期
 	void SetAliveTime(int nAliveTime) { m_nAliveTime = nAliveTime; }
+
+	int GetAliveTime() const { return m_nAliveTime; }
 
 	// 记录当前时间
 	void StartClock() { m_tick = clock(); }

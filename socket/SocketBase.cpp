@@ -68,6 +68,9 @@ int CSocketBase::init(const char *pIp, int nPort, int nType)
 			/// 接收缓冲区
 			int nRecvBuf = 1024 * 1024 * 2;
 			::setsockopt(m_Socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(int));
+			bool bConditionalAccept = true;
+			::setsockopt(m_Socket, SOL_SOCKET, SO_CONDITIONAL_ACCEPT, (const char *)&bConditionalAccept, sizeof(bool));
+
 			/// 创建服务端socket
 			sockaddr_in addrServer;
 			m_SocketListen = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
@@ -115,6 +118,8 @@ int CSocketBase::init(const char *pIp, int nPort, int nType)
 			/// 接收缓冲区
 			int nRecvBuf = 1024 * 1024 * 2;
 			::setsockopt(m_Socket, SOL_SOCKET, SO_RCVBUF, (char*)&nRecvBuf, sizeof(int));
+			bool bConditionalAccept = true;
+			::setsockopt(m_Socket, SOL_SOCKET, SO_CONDITIONAL_ACCEPT, (const char *)&bConditionalAccept, sizeof(bool));
 
 			m_nToport = nPort;
 			memcpy(m_chToIp, pIp, strlen(pIp));
@@ -164,6 +169,7 @@ void CSocketBase::unInit()
 	{
 		closesocket(m_SocketListen);
 		m_SocketListen = INVALID_SOCKET;
+		OutputDebugStringA("\n======> CSocketBase Server Socket Closed.\n\n");
 	}
 }
 

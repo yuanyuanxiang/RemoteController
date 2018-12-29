@@ -75,6 +75,12 @@
     <ClInclude Include="UpdateServer.h">
       <Filter>socket</Filter>
     </ClInclude>
+    <ClInclude Include="DlgSetRemotePort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgSetRemoteIP.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteController.cpp">
@@ -118,6 +124,12 @@
     </ClCompile>
     <ClCompile Include="UpdateServer.cpp">
       <Filter>socket</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgSetRemotePort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgSetRemoteIP.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

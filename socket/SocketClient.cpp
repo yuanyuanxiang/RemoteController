@@ -3,6 +3,7 @@
 #include "..\AppListCtrl.h"
 #include "SocketServer.h"
 #include "..\RemoteControllerDlg.h"
+#include <assert.h>
 
 #ifndef X64
 #ifdef _DEBUG
@@ -19,15 +20,20 @@ extern CAppListCtrl *g_pList;
 	#define BUFFER_LENGTH 4096
 #endif
 
+#define SIP_HEAD_MAX 512
+#define SIP_HEAD_LEN 256
+#define MAX_SIPCMD_LEN BUFFER_LENGTH
+
 // 解析信令的线程
 UINT WINAPI CSocketClient::ParseThread(LPVOID param)
 {
 	CSocketClient *pThis = (CSocketClient*)param;
 	pThis->m_bIsParsing = true;
+	char cSipBuf[SIP_HEAD_MAX+4]; // sip buf
+	char *cXmlBuf = pThis->m_RecvBuffer; // xml buf
 	while (pThis->m_bAlive)
 	{
-		Sleep(10);
-		pThis->ParseData();
+		pThis->ParseData(cSipBuf, cXmlBuf);
 	}
 	pThis->m_bIsParsing = false;
 	return 0xDead00A1;
@@ -39,13 +45,33 @@ UINT WINAPI CSocketClient::ReceiveThread(LPVOID param)
 {
 	CSocketClient *pThis = (CSocketClient*)param;
 	pThis->m_bIsReceiving = true;
+	int k = 0;
 	while (pThis->m_bAlive)
 	{
-		Sleep(10);
 		char buffer[BUFFER_LENGTH];
 		int nRet = pThis->recvData(buffer, BUFFER_LENGTH);
-		(nRet < 0) ? pThis->Disconnect() : pThis->ReceiveData(buffer, nRet);
+		if (nRet > 0)
+		{
+			k = 0;
+			pThis->ReceiveData(buffer, nRet);
+		}else if (nRet == 0)
+		{
+			int alive = pThis->GetAliveTime();
+			alive = max(alive, 5); // 最小为5s
+			if (++k > alive * 60) // 3个心跳无回复
+			{
+				pThis->Disconnect();
+			}
+			Sleep(50);
+		}else
+		{
+			pThis->Disconnect();
+		}
 	}
+	char str[256];
+	sprintf(str, "Socket客户端: [%d] %s:%d 关闭.\n", pThis->m_Socket, pThis->m_chToIp, pThis->m_nToport);
+	OutputDebugStringA(str);
+
 	pThis->m_bIsReceiving = false;
 	return 0xDead00A2;
 }
@@ -68,7 +94,7 @@ CSocketClient::CSocketClient(SOCKET client, const char *Ip, int port)
 	m_bAlive = true;
 	m_bIsParsing = false;
 	m_bIsReceiving = false;
-	m_RingBuffer = new RingBuffer(2 * 1024 * 1024);
+	m_RingBuffer = new RingBuffer(16 * 1024);
 	m_RecvBuffer = new char[BUFFER_LENGTH];
 	m_xmlParser = NULL;
 	m_nAliveTime = ALIVE_TIME;
@@ -105,10 +131,7 @@ void CSocketClient::unInit()
 
 void CSocketClient::Disconnect()
 {
-	char str[256];
-	sprintf(str, "Socket客户端: [%d] %s:%d 关闭.\n", m_Socket, m_chToIp, m_nToport);
 	g_pList->PostMessage(MSG_DeleteApp, m_nSrcPort);
-	OutputDebugStringA(str);
 	m_bExit = true;
 	m_bAlive = false;
 }
@@ -127,6 +150,73 @@ inline time_t SystemTime2Time_t(const SYSTEMTIME &st)
 	struct tm tick = { st.wSecond, st.wMinute, st.wHour, 
 		st.wDay, st.wMonth - 1, st.wYear - 1900, st.wDayOfWeek, 0, 0 };
 	return mktime(&tick);
+}
+
+int getXmlLenFromSip(const char* cHead, const char *pXml)
+{
+	const char *s = cHead, *p = pXml;
+	while (s != p && ':' != *p) --p; ++p;
+	int len = atoi(p);
+	return len;
+}
+
+void CSocketClient::ParseData(char *cSipBuf, char *cXmlBuf)
+{
+	// 获取缓存区部分数据
+	int nRet = 0, nPoped = SIP_HEAD_LEN;
+	int k = 0, sipLen = 0; // 包含xml头的sip头的长度
+	char *pSip = cSipBuf, *pXml = NULL;
+	do{
+		nRet = m_RingBuffer->PopData(pSip, nPoped);
+		if (nRet > 0)
+		{
+			sipLen += nPoped;
+			if(sipLen > SIP_HEAD_MAX)
+				break;
+			pSip += nPoped;
+			pXml = strstr(cSipBuf, "<?xml");
+			if (NULL == pXml) // 包含xml的SIP头长度大于默认值"SIP_HEAD_LEN"，则继续往后取数据
+			{
+				nPoped = 64; //strlen("<?xml version="1.0" encoding="GB2312" standalone="yes"?>")=56
+			}
+		}else{
+			if(++k == m_nAliveTime * 300)
+				m_bExit = true;
+			Sleep(10);
+		}
+	}while(NULL == pXml && !m_bExit);
+	if(sipLen > SIP_HEAD_MAX)
+	{
+		return;
+	}
+
+	cSipBuf[sipLen] = 0;
+
+	int length = pXml ? getXmlLenFromSip(cSipBuf, pXml) : 0;
+	if (length <= 0)
+	{
+		return;
+	}
+
+	int sipBufLen = (pXml-cSipBuf);// sip len
+	int xmlLen = sipLen - sipBufLen;
+	int nLeftSize = length - xmlLen;
+	memcpy(cXmlBuf, pXml, xmlLen);
+
+	*pXml = '\0'; //sip头的结束
+	pXml = cXmlBuf + xmlLen;
+	do 
+	{
+		nRet = m_RingBuffer->PopData(pXml, nLeftSize);
+		if (nRet == nLeftSize)
+			break;
+		Sleep(10);
+	} while (!m_bExit);
+
+	assert(length < MAX_SIPCMD_LEN);
+	cXmlBuf[length < MAX_SIPCMD_LEN ? length : MAX_SIPCMD_LEN-1] = 0;
+	if (nRet == nLeftSize)
+		ReadSipXmlInfo(m_RecvBuffer);
 }
 
 /**
@@ -153,15 +243,12 @@ inline time_t SystemTime2Time_t(const SYSTEMTIME &st)
 </parameters>
 </request>
 */
-void CSocketClient::ReadSipXmlInfo(const char *buffer, int nLen)
+void CSocketClient::ReadSipXmlInfo(const char *pXml)
 {
 	SYSTEMTIME st;// current time
 	GetLocalTime(&st);
 	time_t tick = SystemTime2Time_t(st);
-	char seq[32] = { 0 }, cid[32] = { 0 };
-	const char *xml = GetSeqAndCallId(buffer, seq, cid);
-	if (0 == *xml)
-		return;
+	const char *xml = pXml;
 	OutputDebugStringA(xml);
 	if (NULL == m_xmlParser)
 		m_xmlParser = new TiXmlDocument();

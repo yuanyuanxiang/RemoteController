@@ -51,6 +51,13 @@ CAppListCtrl::CAppListCtrl()
 {
 	m_nIndex = -1;
 	g_pList = this;
+	m_MapStat.insert(std::make_pair(ID_OP_QUERY, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_QUERY, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_RESTART, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_STOP, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_START, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_REMOTE, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_UPDATE, TRUE));
 	InitializeCriticalSection(&m_cs);
 }
 
@@ -83,6 +90,8 @@ BEGIN_MESSAGE_MAP(CAppListCtrl, CListCtrl)
 	ON_MESSAGE(MSG_DeleteApp, &CAppListCtrl::MessageDeleteApp)
 	ON_MESSAGE(MSG_ChangeColor, &CAppListCtrl::MessageChangeColor)
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CAppListCtrl::OnNMCustomdraw)
+	ON_COMMAND(ID_OP_REMOTE, &CAppListCtrl::OnOpRemote)
+	ON_UPDATE_COMMAND_UI(ID_OP_REMOTE, &CAppListCtrl::OnUpdateOpRemote)
 END_MESSAGE_MAP()
 
 
@@ -380,6 +389,7 @@ void CAppListCtrl::UpdateApp()
 		{
 			g_pSocket->SendCommand(ALLOW_DEBUG, c_no);
 			g_MainDlg->m_bAllowDebug = false;
+			Sleep(50);
 		}
 		g_pSocket->SendCommand(cmd.c_str(), c_no);
 	}
@@ -472,4 +482,40 @@ void CAppListCtrl::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 	*pResult |= CDRF_NOTIFYPOSTPAINT;
 	*pResult |= CDRF_NOTIFYITEMDRAW;
+}
+
+
+void CAppListCtrl::OnOpRemote()
+{
+	if (-1 != m_nIndex)
+	{
+		TRACE("======> Remote index = %d\n", m_nIndex);
+		Lock();
+		String ip = W2A(GetItemText(m_nIndex, _ip));
+		Unlock();
+		if (m_MapStat[ID_OP_REMOTE] == TRUE)
+		{
+			USES_CONVERSION;
+			char mstsc[64];
+			sprintf_s(mstsc, "mstsc /v %s", ip.c_str());
+			system(mstsc);
+		}else
+		{
+			MessageBox(CString(ip.c_str())+_T(" 远程连接已打开。"), _T("提示"), MB_ICONINFORMATION | MB_OK);
+		}
+	}
+}
+
+
+void CAppListCtrl::OnUpdateOpRemote(CCmdUI *pCmdUI)
+{
+	if (-1 != m_nIndex)
+	{
+		Lock();
+		CString wnd = GetItemText(m_nIndex, _ip);
+		Unlock();
+		wnd += _T(" - 远程桌面连接");
+		HWND hWnd = ::FindWindow(NULL, wnd);
+		m_MapStat[ID_OP_REMOTE] = hWnd ? FALSE : TRUE;
+	}
 }
