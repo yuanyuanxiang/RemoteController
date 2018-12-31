@@ -344,6 +344,15 @@ void CSocketClient::ReadSipXmlInfo(const char *pXml)
 		std::string cmd = MAKE_CMD(KEEPALIVE, arg);
 		sendData(cmd.c_str(), cmd.length());
 	}
+	else if(0 == strcmp("infomation", cmdType))
+	{
+		static char info[256], details[1024];
+		strcpy_s(info, GetValue(parameters, "info"));
+		strcpy_s(details, GetValue(parameters, "details"));
+		g_pList->PostMessage(MSG_Infomation, (WPARAM)info, (LPARAM)details);
+		OutputDebugStringA(details);
+		OutputDebugStringA("\r\n");
+	}
 	// 为了兼容以前的版本，保留了大写的"Register"
 	// 后续将对注册信令进行验证
 	else if(0 == strcmp(REGISTER, cmdType) || 0 == strcmp("Register", cmdType))

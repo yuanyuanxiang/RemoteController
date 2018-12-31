@@ -26,6 +26,7 @@ public:
 	// 对话框数据
 	enum { IDD = IDD_REMOTECONTROLLER_DIALOG };
 
+	bool m_bExit;				// 退出标志
 	char m_strIp[64];			// 本机IP
 	int m_nPort;				// Ip端口
 	char m_strUp[52];			// 升级地址
@@ -43,6 +44,14 @@ public:
 	bool IsDetectTimeError() const { return m_bDetectTime; }
 	void Lock() { EnterCriticalSection(&m_cs); }
 	void Unlock() { LeaveCriticalSection(&m_cs); }
+
+	// 打开指定端口的udp并获取其窗口
+	std::string udp(int port=6666) const 
+	{
+		char u[100];
+		sprintf_s(u, "udp://%s:%d", m_strIp, port);
+		return u;
+	}
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
@@ -100,6 +109,8 @@ public:
 	afx_msg void OnUpdateSetRemoteip(CCmdUI *pCmdUI);
 	afx_msg void OnSetRemoteport();
 	afx_msg void OnUpdateSetRemoteport(CCmdUI *pCmdUI);
+	afx_msg void OnSpy();
+	afx_msg void OnUpdateSpy(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

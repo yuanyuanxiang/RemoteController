@@ -114,6 +114,7 @@
     <ClInclude Include="AppInfo.h" />
     <ClInclude Include="AppListCtrl.h" />
     <ClInclude Include="cmdList.h" />
+    <ClInclude Include="DlgInfomation.h" />
     <ClInclude Include="DlgSetRemoteIP.h" />
     <ClInclude Include="DlgSetRemotePort.h" />
     <ClInclude Include="IPConfigDlg.h" />
@@ -134,6 +135,7 @@
   <ItemGroup>
     <ClCompile Include="AliveTimeDlg.cpp" />
     <ClCompile Include="AppListCtrl.cpp" />
+    <ClCompile Include="DlgInfomation.cpp" />
     <ClCompile Include="DlgSetRemoteIP.cpp" />
     <ClCompile Include="DlgSetRemotePort.cpp" />
     <ClCompile Include="IPConfigDlg.cpp" />

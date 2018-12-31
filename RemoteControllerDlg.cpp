@@ -162,6 +162,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 	strcpy_s(m_strIp, "127.0.0.1");
 	m_nPort = 9999;
 
+	m_bExit = false;
 	m_pServer = NULL;
 	m_bAdvanced = false;
 	m_bDetectTime = true;
@@ -236,6 +237,8 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_SET_REMOTEIP, &CRemoteControllerDlg::OnUpdateSetRemoteip)
 	ON_COMMAND(ID_SET_REMOTEPORT, &CRemoteControllerDlg::OnSetRemoteport)
 	ON_UPDATE_COMMAND_UI(ID_SET_REMOTEPORT, &CRemoteControllerDlg::OnUpdateSetRemoteport)
+	ON_COMMAND(ID_SPY, &CRemoteControllerDlg::OnSpy)
+	ON_UPDATE_COMMAND_UI(ID_SPY, &CRemoteControllerDlg::OnUpdateSpy)
 END_MESSAGE_MAP()
 
 
@@ -368,7 +371,9 @@ void CRemoteControllerDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
 
+	m_bExit = true;
 	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
+	m_ListApps.Uninit_ffplay();
 	if (NULL != m_pServer)
 	{
 		m_pServer->unInit();
@@ -689,7 +694,7 @@ void CRemoteControllerDlg::OnUpdateUpdate(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnUpdateUpdateSingle(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_ListApps.GetItemCount());
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
 }
 
 
@@ -756,7 +761,7 @@ void CRemoteControllerDlg::OnSelectSettime()
 
 void CRemoteControllerDlg::OnUpdateSelectSettime(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_ListApps.GetItemCount());
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
 }
 
 
@@ -828,7 +833,7 @@ void CRemoteControllerDlg::OnNotice()
 
 void CRemoteControllerDlg::OnUpdateNotice(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_ListApps.GetItemCount());
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
 }
 
 // 允许对远程程序进行降级操作
@@ -846,6 +851,7 @@ void CRemoteControllerDlg::OnAllowDebug()
 void CRemoteControllerDlg::OnUpdateAllowDebug(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bAllowDebug);
+	pCmdUI->Enable(m_ListApps.GetItemCount());
 }
 
 
@@ -870,7 +876,7 @@ void CRemoteControllerDlg::OnSetRemoteip()
 
 void CRemoteControllerDlg::OnUpdateSetRemoteip(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_ListApps.GetItemCount());
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
 }
 
 
@@ -897,5 +903,35 @@ void CRemoteControllerDlg::OnSetRemoteport()
 
 void CRemoteControllerDlg::OnUpdateSetRemoteport(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_ListApps.GetItemCount());
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
+}
+
+
+int GetUdpPort(int base = 6666)
+{
+	static int n = base;
+	n += 2;
+	if (n > 60000)
+	{
+		n = base;
+	}
+	return n;
+}
+
+void CRemoteControllerDlg::OnSpy()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		USES_CONVERSION;
+		String no = W2A(m_ListApps.GetItemText(nRow, _no));
+		m_ListApps.SpyOnSelected(no.c_str(), ::GetUdpPort());
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateSpy(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
 }

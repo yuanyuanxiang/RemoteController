@@ -12,6 +12,7 @@ enum UserMsg
 	MSG_UpdateApp, 
 	MSG_DeleteApp, 
 	MSG_ChangeColor, 
+	MSG_Infomation,			// 收到消息
 };
 
 #define COLOR_DEFAULT 2047	// 默认字体颜色
@@ -56,7 +57,7 @@ public:
 // 替代W2A函数
 String W_2_A(const CString &wStr);
 
-#define MENU_COUNT 6
+#define MENU_COUNT 7
 
 // CAppListCtrl
 
@@ -101,6 +102,16 @@ public:
 
 	std::string getCurSelNo();
 
+	// 监视所选程序
+	void SpyOnSelected(const char *no, int nPort);
+
+	// 清理资源、退出线程
+	void Uninit_ffplay();
+
+	int GetUdpPort(int base = 5555);
+
+	std::map<std::string, int> m_ffplayMap;// 每个连接对应的ffplay端口
+
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
@@ -115,7 +126,10 @@ public:
 	afx_msg LRESULT MessageUpdateApp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT MessageDeleteApp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT MessageChangeColor(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT MessageInfomation(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnOpRemote();
 	afx_msg void OnUpdateOpRemote(CCmdUI *pCmdUI);
+	afx_msg void OnOpSpy();
+	afx_msg void OnUpdateOpSpy(CCmdUI *pCmdUI);
 };

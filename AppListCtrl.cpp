@@ -6,6 +6,8 @@
 #include "AppListCtrl.h"
 #include "socket\SocketServer.h"
 #include "RemoteControllerDlg.h"
+#include <io.h>
+#include "DlgInfomation.h"
 
 extern CSocketServer *g_pSocket;
 
@@ -58,6 +60,7 @@ CAppListCtrl::CAppListCtrl()
 	m_MapStat.insert(std::make_pair(ID_OP_START, TRUE));
 	m_MapStat.insert(std::make_pair(ID_OP_REMOTE, TRUE));
 	m_MapStat.insert(std::make_pair(ID_OP_UPDATE, TRUE));
+	m_MapStat.insert(std::make_pair(ID_OP_SPY, TRUE));
 	InitializeCriticalSection(&m_cs);
 }
 
@@ -89,9 +92,12 @@ BEGIN_MESSAGE_MAP(CAppListCtrl, CListCtrl)
 	ON_MESSAGE(MSG_UpdateApp, &CAppListCtrl::MessageUpdateApp)
 	ON_MESSAGE(MSG_DeleteApp, &CAppListCtrl::MessageDeleteApp)
 	ON_MESSAGE(MSG_ChangeColor, &CAppListCtrl::MessageChangeColor)
+	ON_MESSAGE(MSG_Infomation, &CAppListCtrl::MessageInfomation)
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CAppListCtrl::OnNMCustomdraw)
 	ON_COMMAND(ID_OP_REMOTE, &CAppListCtrl::OnOpRemote)
 	ON_UPDATE_COMMAND_UI(ID_OP_REMOTE, &CAppListCtrl::OnUpdateOpRemote)
+	ON_COMMAND(ID_OP_SPY, &CAppListCtrl::OnOpSpy)
+	ON_UPDATE_COMMAND_UI(ID_OP_SPY, &CAppListCtrl::OnUpdateOpSpy)
 END_MESSAGE_MAP()
 
 
@@ -454,6 +460,48 @@ LRESULT CAppListCtrl::MessageChangeColor(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+class NoticeParam
+{
+private:
+	int t;
+	const char *p1, *p2;
+	~NoticeParam() { }
+public:
+	NoticeParam(const char *x1, const char *x2, int tm) : p1(x1), p2(x2), t(tm) { }
+	const char *title() const { return p1; }
+	const char *details() const { return p2; }
+	int time() const { return t; }
+	void destroy() { delete this; }
+};
+
+void NoticeThread(void *param)
+{
+	OutputDebugStringA("======> BEGIN NoticeThread\n");
+
+	NoticeParam *Para = (NoticeParam*)param;
+	CDlgInfomation dlg(Para->title(), Para->details(), Para->time());
+	Para->destroy();
+	dlg.DoModal();
+
+	OutputDebugStringA("======> END NoticeThread\n");
+}
+
+LRESULT CAppListCtrl::MessageInfomation(WPARAM wParam, LPARAM lParam)
+{
+	TRACE("======> MessageChangeColor\n");
+	const char *info = (char *)wParam;
+	const char *details = (char *)lParam;
+
+	if (0 == strcmp(info, "ffmpeg"))
+	{
+		Uninit_ffplay();
+		_beginthread(&NoticeThread, 0, new NoticeParam(info, details, 5000));
+	}
+
+	return 0;
+}
+
+
 void CAppListCtrl::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	NMLVCUSTOMDRAW *pNMCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
@@ -517,5 +565,160 @@ void CAppListCtrl::OnUpdateOpRemote(CCmdUI *pCmdUI)
 		wnd += _T(" - 远程桌面连接");
 		HWND hWnd = ::FindWindow(NULL, wnd);
 		m_MapStat[ID_OP_REMOTE] = hWnd ? FALSE : TRUE;
+	}
+}
+
+// 线程ffplayThread的参数
+struct ffplayThreadParam
+{
+	HANDLE handle;		// ffplay进程句柄
+	int Port;			// UDP端口
+	std::string row;	// 对应报表的行，即被监控程序
+	ffplayThreadParam(HANDLE h, int port, const char *p) : handle(h), Port(port), row(p) { }
+	void destroy() { delete this; }
+};
+
+void ffplayThread(void *param)
+{
+	OutputDebugStringA("======> BEGIN ffplayThread\n");
+	
+	ffplayThreadParam *p = (ffplayThreadParam *)param;
+	std::string udp = g_MainDlg->udp(p->Port);
+	HWND hWnd = NULL;
+	for (int i = 15; !g_MainDlg->m_bExit && i; --i) // 等待拉流15s
+	{
+		Sleep(1000);
+		if(hWnd = ::FindWindowA(NULL, udp.c_str()))
+		{
+			::ShowWindow(hWnd, SW_SHOW);
+			::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+			break;
+		}
+	}
+	while(hWnd = ::FindWindowA(NULL, udp.c_str()))
+	{
+		Sleep(1000);
+	}
+	// 发送停止拉流的消息
+	std::string cmd = WATCH; cmd += ":0";
+	if(!p->row.empty())
+		g_pSocket->SendCommand(cmd.c_str(), p->row.c_str());
+	// 3s后没有自行退出，则强制结束"ffplay"进程
+	if (WAIT_TIMEOUT == WaitForSingleObject(p->handle, 3000))
+		TerminateProcess(p->handle, -1);
+	CloseHandle(p->handle);
+	p->destroy();
+
+	OutputDebugStringA("======> END ffplayThread\n");
+}
+
+// 启动"ffplay"进行拉流，获取被守护程序的运行界面图
+void CAppListCtrl::SpyOnSelected(const char *no, int nPort)
+{
+	char ffplay[_MAX_PATH], *p = ffplay;
+	GetModuleFileNameA(NULL, ffplay, _MAX_PATH);
+	while (*p) ++p;
+	while ('\\' != *p) --p;
+	strcpy(p+1, "ffplay.exe");
+	if (-1 == _access(ffplay, 0)) // 不存在"ffplay"
+		return;
+	std::map<std::string, int>::const_iterator iter = m_ffplayMap.find(no);
+	bool NotExist =  iter == m_ffplayMap.end();
+	if(!NotExist && !::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str()))
+	{
+		m_ffplayMap.erase(iter);
+		NotExist = true;
+	}
+	if (NotExist)
+	{
+		char param[100];
+		sprintf_s(param, "-analyzeduration 200000 -autoexit -f h264 %s", g_MainDlg->udp(nPort).c_str());
+		CString lpFile = CString(ffplay);
+		CString lpParameters = CString(param);
+		SHELLEXECUTEINFO ShExecInfo = { 0 };
+		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+		ShExecInfo.hwnd = NULL;
+		ShExecInfo.lpVerb = NULL;
+		ShExecInfo.lpFile = lpFile;
+		ShExecInfo.lpParameters = lpParameters;
+		ShExecInfo.lpDirectory = NULL;
+		ShExecInfo.nShow = SW_HIDE;
+		ShExecInfo.hInstApp = NULL;
+		if (FALSE == ShellExecuteEx(&ShExecInfo))
+			OutputDebugStringA("===> [ERROR] 启动 \"ffplay\" 失败。\n");
+		else {
+			// 获取被守护程序运行界面
+			char port[8];
+			_itoa(nPort, port, 10);
+			std::string cmd = WATCH; cmd += ":";cmd += port;
+			m_ffplayMap.insert(std::make_pair(no, nPort));
+			g_pSocket->SendCommand(cmd.c_str(), no);
+			_beginthread(&ffplayThread, 0, new ffplayThreadParam(ShExecInfo.hProcess, nPort, no));
+			OutputDebugStringA("===> [SUCCESS] 启动 \"ffplay\" 成功。\n");
+		}
+	}else
+	{
+		MessageBox(_T("监视窗口正在打开或已打开。"), _T("提示"), MB_ICONINFORMATION | MB_OK);
+	}
+}
+
+
+void CAppListCtrl::Uninit_ffplay()
+{
+	for(std::map<std::string, int>::const_iterator iter = m_ffplayMap.begin(); 
+		iter != m_ffplayMap.end(); ++iter)
+	{
+		HWND hWnd = ::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str());
+		if (hWnd)
+		{
+			::SendMessage(hWnd, WM_CLOSE, 0, 0);
+			while (!iter->first.empty())
+				Sleep(20);
+		}
+	}
+}
+
+int CAppListCtrl::GetUdpPort(int base)
+{
+	static int n = base;
+	n += 2;
+	if (n > 60000)
+	{
+		n = base;
+	}
+	return n;
+}
+
+void CAppListCtrl::OnOpSpy()
+{
+	if (-1 != m_nIndex)
+	{
+		TRACE("======> SPY index = %d\n", m_nIndex);
+		Lock();
+		String no = W2A(GetItemText(m_nIndex, _no));
+		Unlock();
+		SpyOnSelected(no.c_str(), GetUdpPort());
+	}
+}
+
+
+void CAppListCtrl::OnUpdateOpSpy(CCmdUI *pCmdUI)
+{
+	if (-1 != m_nIndex)
+	{
+		Lock();
+		String no = W2A(GetItemText(m_nIndex, _no));
+		Unlock();
+		std::map<std::string, int>::const_iterator iter = m_ffplayMap.find(no.c_str());
+		bool NotExist = iter == m_ffplayMap.end();
+		HWND hWnd = NotExist ? NULL : ::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str());
+		if (hWnd)
+		{
+			::ShowWindow(hWnd, SW_SHOW);
+			::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+		}else if (!NotExist){
+			m_ffplayMap.erase(iter);
+		}
 	}
 }

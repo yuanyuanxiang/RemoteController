@@ -81,6 +81,9 @@
     <ClInclude Include="DlgSetRemoteIP.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DlgInfomation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteController.cpp">
@@ -129,6 +132,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DlgSetRemoteIP.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfomation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

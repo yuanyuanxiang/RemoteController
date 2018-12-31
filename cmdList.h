@@ -49,3 +49,5 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 #define SETIP			"setip"			// 更改守护程序远程IP=>setip:IP
 
 #define SETPORT			"setport"		// 更改守护程序远程端口=>setport:PORT
+
+#define WATCH			"watch"			// 监视此程序运行状态=>watch:Port
