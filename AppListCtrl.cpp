@@ -42,6 +42,9 @@ String W_2_A(const CString &wStr)
 #define W2A W_2_A
 #define USES_CONVERSION
 
+// ffplay启动超时时间
+#define FFPLAY_TIMEOUT 10
+
 // CAppListCtrl
 
 IMPLEMENT_DYNAMIC(CAppListCtrl, CListCtrl)
@@ -460,6 +463,7 @@ LRESULT CAppListCtrl::MessageChangeColor(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+// NoticeThread线程的参数
 class NoticeParam
 {
 private:
@@ -474,6 +478,7 @@ public:
 	void destroy() { delete this; }
 };
 
+// 收到客户端的"infomation"，采用线程进行提示
 void NoticeThread(void *param)
 {
 	OutputDebugStringA("======> BEGIN NoticeThread\n");
@@ -494,7 +499,7 @@ LRESULT CAppListCtrl::MessageInfomation(WPARAM wParam, LPARAM lParam)
 
 	if (0 == strcmp(info, "ffmpeg"))
 	{
-		Uninit_ffplay();
+		Uninit_ffplay(atoi(details+1));
 		_beginthread(&NoticeThread, 0, new NoticeParam(info, details, 5000));
 	}
 
@@ -585,7 +590,7 @@ void ffplayThread(void *param)
 	ffplayThreadParam *p = (ffplayThreadParam *)param;
 	std::string udp = g_MainDlg->udp(p->Port);
 	HWND hWnd = NULL;
-	for (int i = 15; !g_MainDlg->m_bExit && i; --i) // 等待拉流15s
+	for (int i = FFPLAY_TIMEOUT; !g_MainDlg->m_bExit && --i; ) // 等待拉流
 	{
 		Sleep(1000);
 		if(hWnd = ::FindWindowA(NULL, udp.c_str()))
@@ -622,13 +627,16 @@ void CAppListCtrl::SpyOnSelected(const char *no, int nPort)
 	strcpy(p+1, "ffplay.exe");
 	if (-1 == _access(ffplay, 0)) // 不存在"ffplay"
 		return;
-	std::map<std::string, int>::const_iterator iter = m_ffplayMap.find(no);
+	Lock();
+	std::map<std::string, ffplayInfo>::const_iterator iter = m_ffplayMap.find(no);
 	bool NotExist =  iter == m_ffplayMap.end();
-	if(!NotExist && !::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str()))
+	if(!NotExist && iter->second.timeout(FFPLAY_TIMEOUT+5) 
+		&& !::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str()))
 	{
 		m_ffplayMap.erase(iter);
 		NotExist = true;
 	}
+	Unlock();
 	if (NotExist)
 	{
 		char param[100];
@@ -652,31 +660,62 @@ void CAppListCtrl::SpyOnSelected(const char *no, int nPort)
 			char port[8];
 			_itoa(nPort, port, 10);
 			std::string cmd = WATCH; cmd += ":";cmd += port;
+			Lock();
 			m_ffplayMap.insert(std::make_pair(no, nPort));
+			Unlock();
 			g_pSocket->SendCommand(cmd.c_str(), no);
 			_beginthread(&ffplayThread, 0, new ffplayThreadParam(ShExecInfo.hProcess, nPort, no));
 			OutputDebugStringA("===> [SUCCESS] 启动 \"ffplay\" 成功。\n");
 		}
 	}else
 	{
-		MessageBox(_T("监视窗口正在打开或已打开。"), _T("提示"), MB_ICONINFORMATION | MB_OK);
+		MessageBox(_T("监视窗口正在打开或已打开，请稍后再试。"), _T("提示"), MB_ICONINFORMATION | MB_OK);
 	}
 }
 
 
-void CAppListCtrl::Uninit_ffplay()
+/************************************************************************
+* @brief 关闭指定的ffplay
+* @param[in] nPort 报表所选定行的"端口"
+* @note nPort填0将关闭全部
+************************************************************************/
+void CAppListCtrl::Uninit_ffplay(int nPort)
 {
-	for(std::map<std::string, int>::const_iterator iter = m_ffplayMap.begin(); 
+	TRACE("======>[Uninit_ffplay] nPort= %d\n", nPort);
+	Lock();
+	if (nPort)
+	{
+		char port[8];
+		_itoa(nPort, port, 10);
+		std::map<std::string, ffplayInfo>::const_iterator iter = m_ffplayMap.find(port);
+		if (iter != m_ffplayMap.end())
+		{
+			HWND hWnd = ::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str());
+			if (hWnd)
+			{
+				::SendMessage(hWnd, WM_CLOSE, 0, 0);
+				for (int k = 100; !iter->first.empty() && --k; Sleep(20));
+			}
+			// 发送停止拉流的消息
+			std::string cmd = WATCH; cmd += ":0";
+			g_pSocket->SendCommand(cmd.c_str(), iter->first.c_str());
+		}
+	}
+	else
+	for(std::map<std::string, ffplayInfo>::const_iterator iter = m_ffplayMap.begin(); 
 		iter != m_ffplayMap.end(); ++iter)
 	{
 		HWND hWnd = ::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str());
 		if (hWnd)
 		{
 			::SendMessage(hWnd, WM_CLOSE, 0, 0);
-			while (!iter->first.empty())
-				Sleep(20);
+			for (int k = 100; !iter->first.empty() && --k; Sleep(20));
 		}
+		// 发送停止拉流的消息
+		std::string cmd = WATCH; cmd += ":0";
+		g_pSocket->SendCommand(cmd.c_str(), iter->first.c_str());
 	}
+	Unlock();
 }
 
 int CAppListCtrl::GetUdpPort(int base)
@@ -709,16 +748,16 @@ void CAppListCtrl::OnUpdateOpSpy(CCmdUI *pCmdUI)
 	{
 		Lock();
 		String no = W2A(GetItemText(m_nIndex, _no));
-		Unlock();
-		std::map<std::string, int>::const_iterator iter = m_ffplayMap.find(no.c_str());
+		std::map<std::string, ffplayInfo>::const_iterator iter = m_ffplayMap.find(no.c_str());
 		bool NotExist = iter == m_ffplayMap.end();
 		HWND hWnd = NotExist ? NULL : ::FindWindowA(NULL, g_MainDlg->udp(iter->second).c_str());
 		if (hWnd)
 		{
 			::ShowWindow(hWnd, SW_SHOW);
 			::SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-		}else if (!NotExist){
+		}else if (!NotExist && iter->second.timeout(FFPLAY_TIMEOUT + 5)){
 			m_ffplayMap.erase(iter);
 		}
+		Unlock();
 	}
 }

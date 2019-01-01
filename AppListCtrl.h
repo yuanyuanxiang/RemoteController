@@ -106,11 +106,20 @@ public:
 	void SpyOnSelected(const char *no, int nPort);
 
 	// 清理资源、退出线程
-	void Uninit_ffplay();
+	void Uninit_ffplay(int nPort);
 
 	int GetUdpPort(int base = 5555);
 
-	std::map<std::string, int> m_ffplayMap;// 每个连接对应的ffplay端口
+	struct ffplayInfo
+	{
+		int udp_port;
+		time_t t;
+		ffplayInfo(int port) : udp_port(port), t(time(NULL)) { }
+		bool timeout(int timeouttime) const { return time(NULL) - t > timeouttime; }
+		operator int() const { return udp_port; }
+	};
+
+	std::map<std::string, ffplayInfo> m_ffplayMap;// 每个连接对应的ffplay端口
 
 protected:
 	DECLARE_MESSAGE_MAP()

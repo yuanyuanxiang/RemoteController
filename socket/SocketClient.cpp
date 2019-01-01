@@ -348,7 +348,7 @@ void CSocketClient::ReadSipXmlInfo(const char *pXml)
 	{
 		static char info[256], details[1024];
 		strcpy_s(info, GetValue(parameters, "info"));
-		strcpy_s(details, GetValue(parameters, "details"));
+		sprintf_s(details, "[%d]%s", m_nSrcPort, GetValue(parameters, "details"));
 		g_pList->PostMessage(MSG_Infomation, (WPARAM)info, (LPARAM)details);
 		OutputDebugStringA(details);
 		OutputDebugStringA("\r\n");

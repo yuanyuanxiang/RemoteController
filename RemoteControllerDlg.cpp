@@ -373,7 +373,8 @@ void CRemoteControllerDlg::OnDestroy()
 
 	m_bExit = true;
 	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
-	m_ListApps.Uninit_ffplay();
+	m_ListApps.Uninit_ffplay(0);
+	Sleep(200);
 	if (NULL != m_pServer)
 	{
 		m_pServer->unInit();
