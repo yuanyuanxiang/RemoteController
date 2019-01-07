@@ -239,6 +239,10 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_SET_REMOTEPORT, &CRemoteControllerDlg::OnUpdateSetRemoteport)
 	ON_COMMAND(ID_SPY, &CRemoteControllerDlg::OnSpy)
 	ON_UPDATE_COMMAND_UI(ID_SPY, &CRemoteControllerDlg::OnUpdateSpy)
+	ON_COMMAND(ID_START_GHOST, &CRemoteControllerDlg::OnStartGhost)
+	ON_UPDATE_COMMAND_UI(ID_START_GHOST, &CRemoteControllerDlg::OnUpdateStartGhost)
+	ON_COMMAND(ID_STOP_GHOST, &CRemoteControllerDlg::OnStopGhost)
+	ON_UPDATE_COMMAND_UI(ID_STOP_GHOST, &CRemoteControllerDlg::OnUpdateStopGhost)
 END_MESSAGE_MAP()
 
 
@@ -311,6 +315,8 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	g_pSocket = m_pServer;
 
 	m_bAdvanced = GetPrivateProfileIntA("settings", "advanced", 0, m_strConf);
+	m_nGhost = GetPrivateProfileIntA("settings", "ghost", 6543, m_strConf);
+	if (m_nGhost <= 0 || m_nGhost >= _BASE_PORT) m_nGhost = 6543;
 	SetUnhandledExceptionFilter(&whenbuged);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -935,4 +941,32 @@ void CRemoteControllerDlg::OnSpy()
 void CRemoteControllerDlg::OnUpdateSpy(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(0 != m_ListApps.GetFirstSelectedItemPosition());
+}
+
+
+void CRemoteControllerDlg::OnStartGhost()
+{
+	char cmd[100];
+	sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
+	g_pSocket->ControlDevice(cmd);
+}
+
+
+void CRemoteControllerDlg::OnUpdateStartGhost(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnStopGhost()
+{
+	char cmd[100];
+	sprintf_s(cmd, "%s:%d", WATCH, -1);
+	g_pSocket->SendCommand(cmd);
+}
+
+
+void CRemoteControllerDlg::OnUpdateStopGhost(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

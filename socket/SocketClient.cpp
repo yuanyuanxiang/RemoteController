@@ -346,6 +346,8 @@ void CSocketClient::ReadSipXmlInfo(const char *pXml)
 	}
 	else if(0 == strcmp("infomation", cmdType))
 	{
+		int code = atoi(GetValue(parameters, "code"));
+		TRACE("===> [INFOMATION] recv msg, response code = %d.\n", code);
 		static char info[256], details[1024];
 		strcpy_s(info, GetValue(parameters, "info"));
 		sprintf_s(details, "[%d]%s", m_nSrcPort, GetValue(parameters, "details"));

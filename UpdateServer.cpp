@@ -321,6 +321,11 @@ void SocketInfo::processing()
 		}
 		sprintf_s(arg, "%d,%s", total, MD5);
 		make_cmd(resp, "size", arg);
+#ifdef _DEBUG
+		OutputDebugStringA("===> Send: ");
+		OutputDebugStringA(resp);
+		OutputDebugStringA("\r\n");
+#endif
 		::send(s, resp, SIZE_1, 0);
 	}else if (1 == step[1])// ´«ÊäÎÄ¼ş
 	{

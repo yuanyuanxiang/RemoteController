@@ -101,6 +101,7 @@ BEGIN_MESSAGE_MAP(CAppListCtrl, CListCtrl)
 	ON_UPDATE_COMMAND_UI(ID_OP_REMOTE, &CAppListCtrl::OnUpdateOpRemote)
 	ON_COMMAND(ID_OP_SPY, &CAppListCtrl::OnOpSpy)
 	ON_UPDATE_COMMAND_UI(ID_OP_SPY, &CAppListCtrl::OnUpdateOpSpy)
+	ON_COMMAND(ID_RECOVERY, &CAppListCtrl::RecoveryApp)
 END_MESSAGE_MAP()
 
 
@@ -229,7 +230,7 @@ void CAppListCtrl::DeleteAppItem(const char* port)
 		if (0 == strcmp(port, W2A(no)))
 		{
 			CString s = GetItemText(row, _id);
-			const char *str = W2A(s);
+			String str = W2A(s);
 			int id = atoi(str);// 被删掉的行
 			DeleteItem(row);
 			// 所有的行需要重新编号
@@ -237,7 +238,7 @@ void CAppListCtrl::DeleteAppItem(const char* port)
 			for(int i = 0; i < n; ++i)
 			{
 				s = GetItemText(i, _id);
-				str = W2A(s);
+				String str = W2A(s);
 				int temp = atoi(str);
 				if (temp > id)
 				{
@@ -367,7 +368,9 @@ void CAppListCtrl::UpdateApp()
 		// 升级时检查目标程序版本是否大于本地文件
 		CString name = GetItemText(m_nIndex, _name);
 		std::string ver = g_pSocket->getVersion(std::string(W2A(name)));
-		if (!g_MainDlg->m_bAllowDebug && strcmp(W2A(GetItemText(m_nIndex, _version)), ver.c_str()) >= 0)
+		String src_ver = W2A(GetItemText(m_nIndex, _version));
+		const char *pVer = strcmp(src_ver, "无") ? src_ver.c_str() : "";
+		if (!g_MainDlg->m_bAllowDebug && strcmp(pVer, ver.c_str()) >= 0)
 		{
 			Unlock();
 			if (!name.IsEmpty() && !g_MainDlg->m_bAllowDebug)
@@ -500,8 +503,9 @@ LRESULT CAppListCtrl::MessageInfomation(WPARAM wParam, LPARAM lParam)
 	if (0 == strcmp(info, "ffmpeg"))
 	{
 		Uninit_ffplay(atoi(details+1));
-		_beginthread(&NoticeThread, 0, new NoticeParam(info, details, 5000));
 	}
+
+	_beginthread(&NoticeThread, 0, new NoticeParam(info, details, 5000));
 
 	return 0;
 }
@@ -759,5 +763,21 @@ void CAppListCtrl::OnUpdateOpSpy(CCmdUI *pCmdUI)
 			m_ffplayMap.erase(iter);
 		}
 		Unlock();
+	}
+}
+
+
+void CAppListCtrl::RecoveryApp()
+{
+	if (-1 != m_nIndex && IDYES == MessageBox(_T("确定\"还原\"此程序吗? \r\n应在升级出现问题时进行此操作。"), 
+		_T("警告"), MB_ICONWARNING | MB_YESNO))
+	{
+		TRACE("======> RecoveryApp index = %d\n", m_nIndex);
+		USES_CONVERSION;
+		Lock();
+		String no = W2A(GetItemText(m_nIndex, _no));
+		Unlock();
+		std::string cmd = MAKE_CMD(UPDATE, "-");
+		g_pSocket->SendCommand(cmd.c_str(), no.c_str());
 	}
 }

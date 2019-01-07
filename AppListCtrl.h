@@ -108,7 +108,7 @@ public:
 	// 清理资源、退出线程
 	void Uninit_ffplay(int nPort);
 
-	int GetUdpPort(int base = 5555);
+	int GetUdpPort(int base = _BASE_PORT+1);
 
 	struct ffplayInfo
 	{
@@ -141,4 +141,5 @@ public:
 	afx_msg void OnUpdateOpRemote(CCmdUI *pCmdUI);
 	afx_msg void OnOpSpy();
 	afx_msg void OnUpdateOpSpy(CCmdUI *pCmdUI);
+	afx_msg void RecoveryApp();
 };

@@ -20,6 +20,9 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 // 默认心跳周期（秒）
 #define ALIVE_TIME 120
 
+// ffmpeg传屏起始端口
+#define _BASE_PORT 6666
+
 #define RESTART			"restart"		// 重启程序
 
 #define REFRESH			"refresh"		// 刷新显示
@@ -36,7 +39,7 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 
 #define KEEPALIVE		"keepAlive"		// 心跳=>keeAlive:AliveTime
 
-#define UPDATE			"update"		// 升级程序=>update:a
+#define UPDATE			"update"		// 升级程序=>update:pos/a/+/-
 
 #define SETTIME			"settime"		// 校时=>settime:年,月,日,时,分,秒
 

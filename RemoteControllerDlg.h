@@ -29,6 +29,7 @@ public:
 	bool m_bExit;				// 退出标志
 	char m_strIp[64];			// 本机IP
 	int m_nPort;				// Ip端口
+	int m_nGhost;				// ghost服务端端口（<_BASE_PORT）
 	char m_strUp[52];			// 升级地址
 	char m_strConf[_MAX_PATH];	// 配置文件
 	bool m_bAdvanced;			// 启用高级功能
@@ -46,7 +47,7 @@ public:
 	void Unlock() { LeaveCriticalSection(&m_cs); }
 
 	// 打开指定端口的udp并获取其窗口
-	std::string udp(int port=6666) const 
+	std::string udp(int port=_BASE_PORT) const 
 	{
 		char u[100];
 		sprintf_s(u, "udp://%s:%d", m_strIp, port);
@@ -111,6 +112,10 @@ public:
 	afx_msg void OnUpdateSetRemoteport(CCmdUI *pCmdUI);
 	afx_msg void OnSpy();
 	afx_msg void OnUpdateSpy(CCmdUI *pCmdUI);
+	afx_msg void OnStartGhost();
+	afx_msg void OnUpdateStartGhost(CCmdUI *pCmdUI);
+	afx_msg void OnStopGhost();
+	afx_msg void OnUpdateStopGhost(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

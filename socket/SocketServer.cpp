@@ -293,6 +293,8 @@ std::string CSocketServer::getVersion(const std::string &name)
 	GetModuleFileNameA(NULL, path, _MAX_PATH);
 	while(*p) ++p;
 	while('\\' != *p) --p;
+	sprintf(p+1, "%s", name.c_str());
+	CheckFilelist(CString(path));
 	sprintf(p+1, "%s\\%s.exe", name.c_str(), name.c_str());
 	std::string ver = GetExeVersion(CString(path));
 	Lock();
@@ -310,7 +312,7 @@ bool IsExist(const std::string &ip, const std::vector<std::string> &v)
 	return false;
 }
 
-
+// 确保一台机器只收到一次信令
 void CSocketServer::ControlDevice( const char *msg )
 {
 	TRACE("======> ControlDevice: %s\n", msg);

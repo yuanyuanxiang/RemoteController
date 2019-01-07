@@ -147,6 +147,7 @@
     <None Include="res\RemoteController.rc2">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="settings.ini" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\RemoteController.ico">
