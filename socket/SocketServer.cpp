@@ -73,9 +73,11 @@ int CSocketServer::init(const char *pIp, int nPort, int nType)
 	m_bExit = false;
 	GetAllSoftwareVersion();
 	int ret = CSocketBase::init(pIp, nPort, nType);
-	if(0 == ret)
+	if(0 == ret){
 		// ¿ªÊ¼¼àÌý
-		_beginthreadex(NULL, 0, &CheckIOThread, this, 0, NULL);
+		HANDLE h = (HANDLE)_beginthreadex(NULL, 0, &CheckIOThread, this, 0, NULL);
+		CloseHandle(h);
+	}
 	return ret;
 }
 

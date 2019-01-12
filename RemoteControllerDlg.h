@@ -60,6 +60,7 @@ protected:
 // 实现
 protected:
 	HICON m_hIcon;
+	HACCEL m_hAcc;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
@@ -116,6 +117,11 @@ public:
 	afx_msg void OnUpdateStartGhost(CCmdUI *pCmdUI);
 	afx_msg void OnStopGhost();
 	afx_msg void OnUpdateStopGhost(CCmdUI *pCmdUI);
+	afx_msg void OnAccelRefresh();
+	afx_msg void OnUpdateAccelRefresh(CCmdUI *pCmdUI);
+	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg void OnGhostPort();
+	afx_msg void OnUpdateGhostPort(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

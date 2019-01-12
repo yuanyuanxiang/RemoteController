@@ -243,6 +243,11 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_START_GHOST, &CRemoteControllerDlg::OnUpdateStartGhost)
 	ON_COMMAND(ID_STOP_GHOST, &CRemoteControllerDlg::OnStopGhost)
 	ON_UPDATE_COMMAND_UI(ID_STOP_GHOST, &CRemoteControllerDlg::OnUpdateStopGhost)
+	ON_COMMAND(ID_ACCEL_REFRESH, &CRemoteControllerDlg::OnAccelRefresh)
+	ON_UPDATE_COMMAND_UI(ID_ACCEL_REFRESH, &CRemoteControllerDlg::OnUpdateAccelRefresh)
+	ON_WM_HELPINFO()
+	ON_COMMAND(ID_GHOST_PORT, &CRemoteControllerDlg::OnGhostPort)
+	ON_UPDATE_COMMAND_UI(ID_GHOST_PORT, &CRemoteControllerDlg::OnUpdateGhostPort)
 END_MESSAGE_MAP()
 
 
@@ -319,6 +324,8 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	if (m_nGhost <= 0 || m_nGhost >= _BASE_PORT) m_nGhost = 6543;
 	SetUnhandledExceptionFilter(&whenbuged);
 
+	m_hAcc=LoadAccelerators(AfxGetInstanceHandle(),MAKEINTRESOURCE(IDR_ACCELERATOR));
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -380,7 +387,12 @@ void CRemoteControllerDlg::OnDestroy()
 	m_bExit = true;
 	OutputDebugStringA("======> CRemoteControllerDlg begin OnDestroy()\n");
 	m_ListApps.Uninit_ffplay(0);
-	Sleep(200);
+	Sleep(100);
+	// 停止远程的幽灵
+	char cmd[100];
+	sprintf_s(cmd, "%s:%d", WATCH, -1);
+	g_pSocket->SendCommand(cmd);
+	Sleep(100);
 	if (NULL != m_pServer)
 	{
 		m_pServer->unInit();
@@ -419,6 +431,9 @@ BOOL CRemoteControllerDlg::PreTranslateMessage(MSG* pMsg)
 	if( pMsg->message == WM_KEYDOWN && 
 		(pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN) )
 		return TRUE;
+	if (WM_KEYFIRST <= pMsg->message && pMsg->message <= WM_KEYLAST)
+		if (m_hAcc && ::TranslateAccelerator(m_hWnd, m_hAcc, pMsg))
+			return TRUE;
 
 	return CDialog::PreTranslateMessage(pMsg);
 }
@@ -946,9 +961,20 @@ void CRemoteControllerDlg::OnUpdateSpy(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnStartGhost()
 {
-	char cmd[100];
-	sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
-	g_pSocket->ControlDevice(cmd);
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		CString no = m_ListApps.GetItemText(nRow, _no);
+		char cmd[100];
+		sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
+		g_pSocket->SendCommand(cmd, W2A(no));
+	}else
+	{
+		char cmd[100];
+		sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
+		g_pSocket->ControlDevice(cmd);
+	}
 }
 
 
@@ -960,13 +986,77 @@ void CRemoteControllerDlg::OnUpdateStartGhost(CCmdUI *pCmdUI)
 
 void CRemoteControllerDlg::OnStopGhost()
 {
-	char cmd[100];
-	sprintf_s(cmd, "%s:%d", WATCH, -1);
-	g_pSocket->SendCommand(cmd);
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		CString no = m_ListApps.GetItemText(nRow, _no);
+		char cmd[100];
+		sprintf_s(cmd, "%s:%d", WATCH, -1);
+		g_pSocket->SendCommand(cmd, W2A(no));
+	}else
+	{
+		char cmd[100];
+		sprintf_s(cmd, "%s:%d", WATCH, -1);
+		g_pSocket->SendCommand(cmd);
+	}
 }
 
 
 void CRemoteControllerDlg::OnUpdateStopGhost(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+// F5刷新
+void CRemoteControllerDlg::OnAccelRefresh()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	if (pos)
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		CString no = m_ListApps.GetItemText(nRow, _no);
+		g_pSocket->SendCommand(REFRESH, W2A(no));
+	}else
+		OnRefreshAll();
+}
+
+
+void CRemoteControllerDlg::OnUpdateAccelRefresh(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+// 按F1弹出"关于"对话框
+BOOL CRemoteControllerDlg::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+	CAboutDlg dlg;
+	dlg.DoModal();
+	return TRUE;
+}
+
+
+void CRemoteControllerDlg::OnGhostPort()
+{
+	CIPConfigDlg dlg(_T("禁界"));
+	dlg.m_strIpAddr = m_strIp;
+	dlg.m_nPort = m_nGhost;
+	dlg.m_bModIP = FALSE;
+	if (IDOK == dlg.DoModal())
+	{
+		if (dlg.m_nPort < _BASE_PORT && m_nGhost != dlg.m_nPort)
+		{
+			m_nGhost = dlg.m_nPort;
+			char buf[64];
+			sprintf_s(buf, "%d", m_nGhost);
+			WritePrivateProfileStringA("settings", "ghost", buf, m_strConf);
+		}
+	}
+}
+
+
+void CRemoteControllerDlg::OnUpdateGhostPort(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
 }

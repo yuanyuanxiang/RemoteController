@@ -101,8 +101,11 @@ CSocketClient::CSocketClient(SOCKET client, const char *Ip, int port)
 	m_nSrcPort = port;
 	sprintf_s(m_strSrcPort, "%d", port);
 	memset(m_strName, 0, 64);
-	_beginthreadex(NULL, 0, &ParseThread, this, 0, NULL);
-	_beginthreadex(NULL, 0, &ReceiveThread, this, 0, NULL);
+	HANDLE h = NULL;
+	h = (HANDLE)_beginthreadex(NULL, 0, &ParseThread, this, 0, NULL);
+	CloseHandle(h);
+	h =(HANDLE)_beginthreadex(NULL, 0, &ReceiveThread, this, 0, NULL);
+	CloseHandle(h);
 	char str[256];
 	sprintf_s(str, "发现新的Socket客户端: [%d] %s:%d.\n", m_Socket, m_chToIp, m_nToport);
 	OutputDebugStringA(str);

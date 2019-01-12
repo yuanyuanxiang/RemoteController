@@ -11,9 +11,11 @@
 
 IMPLEMENT_DYNAMIC(CIPConfigDlg, CDialog)
 
-CIPConfigDlg::CIPConfigDlg(CWnd* pParent /*=NULL*/)
+CIPConfigDlg::CIPConfigDlg(CString sTitle, CWnd* pParent /*=NULL*/)
 	: CDialog(CIPConfigDlg::IDD, pParent)
+	, m_strTitle(sTitle)
 	, m_strIpAddr(_T(""))
+	, m_bModIP(TRUE)
 	, m_nPort(9999)
 {
 
@@ -39,3 +41,15 @@ END_MESSAGE_MAP()
 
 
 // CIPConfigDlg 消息处理程序
+
+
+BOOL CIPConfigDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	SetWindowText(m_strTitle);
+
+	m_IpAddr.EnableWindow(m_bModIP);
+
+	return TRUE;
+}

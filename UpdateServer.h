@@ -45,15 +45,17 @@ typedef struct folder
 
 struct SocketInfo
 {
+	enum { STEP_1 = 0, STEP_2, STEP_NUM };
+	enum { NOT_DONE = 0, DONE };
 	SOCKET s;					// socket
 	int total;					// 文件总字节
 	bool flag;					// 线程状态
-	int step[2];				// 通知
+	int step[STEP_NUM];				// 通知
 	char *buf;					// 读文件缓存
 	char file[_MAX_PATH];		// 文件全路径
 	SocketInfo() : s(INVALID_SOCKET), total(0), flag(false), buf(NULL)
 	{
-		step[0] = step[1] = 0;
+		step[STEP_1] = step[STEP_2] = NOT_DONE;
 	}
 	~SocketInfo() { if (buf) delete [] buf; }
 	void callback(const char *data, int len); // 收到数据时回调
@@ -63,7 +65,7 @@ struct SocketInfo
 		s = INVALID_SOCKET;
 		while(flag)
 			Sleep(10);
-		step[0] = step[1] = 0;
+		step[STEP_1] = step[STEP_2] = NOT_DONE;
 		total = 0;
 	}
 	void start(){
@@ -74,6 +76,16 @@ struct SocketInfo
 	static UINT WINAPI ParseDataThread(void *param);
 };
 
+/************************************************************************
+* @class UpdateServer
+* @brief 被守护程序升级服务端
+* @details 升级分为2步：
+*	 req					| resp
+*	 (1) size:file			| size:bytes,md5
+*	 (2) down:file			| ......
+第（1）步，客户端发送要升级的文件名，服务端进行校验，返回文件字节数和MD5码
+第（2）步：客户端校验MD5码，发送升级指令，服务端解析该指令并开始文件传输
+/************************************************************************/
 class UpdateServer
 {
 private:

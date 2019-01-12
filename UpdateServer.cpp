@@ -5,7 +5,7 @@
 
 #define SLEEP_TIME 50
 
-folder g_f;
+folder g_f; // 目录访问器，仅单线程操作，多线程不安全
 
 UpdateServer::UpdateServer(void)
 {
@@ -268,11 +268,11 @@ void SocketInfo::callback(const char *data, int len)
 		sprintf_s(szLog, "===> 准备向客户端传输文件：%s\n", arg);
 		OutputDebugStringA(szLog);
 		strcpy_s(file, g_f.get(arg));
-		step[0] = 1;
+		step[STEP_1] = DONE;
 	}else if (0 == strcmp(buf, "down"))
 	{
 		if ('?' == *arg) total = 0; // 客户端是否不下载
-		step[1] = 1;
+		step[STEP_2] = DONE;
 	}else
 	{
 		char szLog[300];
@@ -302,9 +302,9 @@ UINT WINAPI SocketInfo::ParseDataThread(void *param)
 
 void SocketInfo::processing()
 {
-	if (1 == step[0])// 发送文件概要
+	if (DONE == step[STEP_1])// Step1: 发送文件概要
 	{
-		++step[0];
+		++step[STEP_1];
 		OutputDebugStringA("===> STEP 1\n");
 		char resp[SIZE_1], arg[SIZE_1], MD5[32+4] = {0};
 		total = 0;
@@ -327,9 +327,9 @@ void SocketInfo::processing()
 		OutputDebugStringA("\r\n");
 #endif
 		::send(s, resp, SIZE_1, 0);
-	}else if (1 == step[1])// 传输文件
+	}else if (DONE == step[STEP_2])// Step2: 传输文件
 	{
-		++step[1];
+		++step[STEP_2];
 		OutputDebugStringA("===> STEP 2\n");
 		int size = total;
 		if (size <= 0)

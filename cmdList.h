@@ -14,6 +14,7 @@ inline std::string PARSE_CMD(const char *msg, char *out_cmd)
 	const char *p = msg;
 	while (*p && ':' != *p) ++p;
 	memcpy(out_cmd, msg, p - msg);
+	out_cmd[p-msg] = 0;
 	return (':' == *p) ? p + 1 : "";
 }
 
