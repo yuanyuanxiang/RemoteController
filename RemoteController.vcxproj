@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\RemoteController.rc2" />
+    <None Include="res\Yama.exe" />
     <None Include="settings.ini" />
   </ItemGroup>
   <ItemGroup>

@@ -107,6 +107,42 @@ CSocketServer *g_pSocket = NULL;
 
 CRemoteControllerDlg *g_MainDlg = NULL;
 
+// 阎王
+struct YAMA
+{
+	HANDLE handle;				// 进程句柄
+	bool released;				// 是否释放
+	char path[_MAX_PATH];		// 程序路径
+	YAMA() : handle(NULL), released(false) { memset(path, 0, sizeof(path)); }
+} g_yama; // YAMA
+
+
+/************************************************************************/
+/* 函数说明：释放资源中某类型的文件                                     
+/* 参    数：新文件名、资源ID、资源类型                                 
+/* 返 回 值：成功返回TRUE，否则返回FALSE  
+/* By:Koma     2009.07.24 23:30    
+/* https://www.cnblogs.com/Browneyes/p/4916299.html
+/************************************************************************/
+BOOL ReleaseRes(const char *strFileName, WORD wResID, const CString &strFileType)
+{
+	// 资源大小
+	DWORD dwWrite=0;
+	// 创建文件
+	HANDLE hFile = CreateFileA(strFileName, GENERIC_WRITE,FILE_SHARE_WRITE,NULL,
+		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if ( hFile == INVALID_HANDLE_VALUE )
+		return FALSE;
+	// 查找资源文件中、加载资源到内存、得到资源大小
+	HRSRC hrsc = FindResource(NULL, MAKEINTRESOURCE(wResID), strFileType);
+	HGLOBAL hG = LoadResource(NULL, hrsc);
+	DWORD dwSize = SizeofResource( NULL,  hrsc);
+	// 写入文件
+	WriteFile(hFile, hG, dwSize, &dwWrite, NULL);
+	CloseHandle( hFile );
+	return TRUE;
+}
+
 const char* GetLocalHost()
 {
 	static char localhost[128] = { "127.0.0.1" };
@@ -248,16 +284,80 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_WM_HELPINFO()
 	ON_COMMAND(ID_GHOST_PORT, &CRemoteControllerDlg::OnGhostPort)
 	ON_UPDATE_COMMAND_UI(ID_GHOST_PORT, &CRemoteControllerDlg::OnUpdateGhostPort)
+	ON_COMMAND(ID_SHOW_YAMA, &CRemoteControllerDlg::OnShowYama)
+	ON_UPDATE_COMMAND_UI(ID_SHOW_YAMA, &CRemoteControllerDlg::OnUpdateShowYama)
 END_MESSAGE_MAP()
 
 
 // CRemoteControllerDlg 消息处理程序
+
+// 释放"yama.exe"文件并启动
+void ReleaseYama()
+{
+	if (g_yama.handle) //已释放
+		return;
+
+	ReleaseRes(g_yama.path, (WORD)IDR_YAMA, L"EXE");
+	
+	if (_access(g_yama.path, 0) == -1)
+		return;
+	g_yama.released = true;
+
+	CString Module(g_yama.path);
+	SHELLEXECUTEINFO ShExecInfo = { 0 };
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = Module;
+	ShExecInfo.lpParameters = NULL;
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = SW_HIDE;
+	ShExecInfo.hInstApp = NULL;
+	if (TRUE == ShellExecuteEx(&ShExecInfo))
+	{
+		g_yama.handle = ShExecInfo.hProcess;
+	}
+}
+
+// 重启YAMA
+void RestartYama()
+{
+	if (g_yama.handle)
+	{
+		TerminateProcess(g_yama.handle, -1);
+		WaitForSingleObject(g_yama.handle, 5000);
+		CloseHandle(g_yama.handle);
+		g_yama.handle = NULL;
+	}
+
+	CString Module(g_yama.path);
+	SHELLEXECUTEINFO ShExecInfo = { 0 };
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = Module;
+	ShExecInfo.lpParameters = NULL;
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = SW_HIDE;
+	ShExecInfo.hInstApp = NULL;
+	if (TRUE == ShellExecuteEx(&ShExecInfo))
+	{
+		g_yama.handle = ShExecInfo.hProcess;
+	}
+}
 
 BOOL CRemoteControllerDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
 	// 将“关于...”菜单项添加到系统菜单中。
+	char *p = g_yama.path;
+	GetModuleFileNameA(NULL, g_yama.path, _MAX_PATH);
+	while(*p) ++p;
+	while ('\\' != *p) --p; ++p;
+	strcpy(p, "YAMA.EXE");
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
@@ -299,7 +399,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	m_pServer = new CSocketServer;
 	// settings.ini
 	GetModuleFileNameA(NULL, m_strConf, _MAX_PATH);
-	char *p = m_strConf;
+	p = m_strConf;
 	while('\0' != *p) ++p;
 	while('\\' != *p) --p;
 	strcpy(p, "\\ScreenShot\\");
@@ -392,6 +492,20 @@ void CRemoteControllerDlg::OnDestroy()
 	char cmd[100];
 	sprintf_s(cmd, "%s:%d", WATCH, -1);
 	g_pSocket->SendCommand(cmd);
+	// 停止YAMA
+	if (g_yama.handle)
+	{
+		TerminateProcess(g_yama.handle, -1);
+		WaitForSingleObject(g_yama.handle, 5000);
+		CloseHandle(g_yama.handle);
+		g_yama.handle = NULL;
+		BOOL b = DeleteFileA(g_yama.path);
+		for (int k = 10; FALSE == b && --k; Sleep(200))
+			b = DeleteFileA(g_yama.path);
+		if (FALSE == b)
+			OutputDebugStringA("======> YAMA 删除失败!\n");
+	}
+
 	Sleep(100);
 	if (NULL != m_pServer)
 	{
@@ -975,6 +1089,16 @@ void CRemoteControllerDlg::OnStartGhost()
 		sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
 		g_pSocket->ControlDevice(cmd);
 	}
+	if (g_yama.handle == NULL) // 首次启动YAMA
+		OnShowYama();
+	else
+	{
+		HWND hWnd = ::FindWindow(NULL, _T("Yama"));
+		if (hWnd)
+		{
+			::ShowWindow(hWnd, SW_SHOW);
+		}
+	}
 }
 
 
@@ -999,6 +1123,14 @@ void CRemoteControllerDlg::OnStopGhost()
 		char cmd[100];
 		sprintf_s(cmd, "%s:%d", WATCH, -1);
 		g_pSocket->SendCommand(cmd);
+	}
+	if (g_yama.handle) // 隐藏YAMA
+	{
+		HWND hWnd = ::FindWindow(NULL, _T("Yama"));
+		if (hWnd)
+		{
+			::ShowWindow(hWnd, SW_HIDE);
+		}
 	}
 }
 
@@ -1039,7 +1171,7 @@ BOOL CRemoteControllerDlg::OnHelpInfo(HELPINFO* pHelpInfo)
 
 void CRemoteControllerDlg::OnGhostPort()
 {
-	CIPConfigDlg dlg(_T("禁界"));
+	CIPConfigDlg dlg(_T("监听端口"));
 	dlg.m_strIpAddr = m_strIp;
 	dlg.m_nPort = m_nGhost;
 	dlg.m_bModIP = FALSE;
@@ -1051,6 +1183,20 @@ void CRemoteControllerDlg::OnGhostPort()
 			char buf[64];
 			sprintf_s(buf, "%d", m_nGhost);
 			WritePrivateProfileStringA("settings", "ghost", buf, m_strConf);
+			if (g_yama.handle)
+			{
+				BeginWaitCursor();
+				// 重启阎王
+				RestartYama();
+				// 重启全部幽灵
+				char cmd[100];
+				sprintf_s(cmd, "%s:%d", WATCH, -1);
+				g_pSocket->SendCommand(cmd);
+				Sleep(200);
+				sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
+				g_pSocket->ControlDevice(cmd);
+				EndWaitCursor();
+			}
 		}
 	}
 }
@@ -1059,4 +1205,46 @@ void CRemoteControllerDlg::OnGhostPort()
 void CRemoteControllerDlg::OnUpdateGhostPort(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_ListApps.GetItemCount());
+}
+
+
+void CRemoteControllerDlg::OnShowYama()
+{
+	bool firstrun = false;
+	BeginWaitCursor();
+	DWORD code = STILL_ACTIVE;// 退出代码
+	if (g_yama.handle)
+		GetExitCodeProcess(g_yama.handle, &code);
+	if (!g_yama.released)
+	{
+		firstrun = true;
+		ReleaseYama();
+	}
+	if (code != STILL_ACTIVE)
+	{
+		CloseHandle(g_yama.handle);
+		g_yama.handle = NULL;
+		firstrun = true;
+		RestartYama();
+	}
+	if (firstrun)
+	{
+		char cmd[100];
+		sprintf_s(cmd, "%s:%d", WATCH, m_nGhost);
+		g_pSocket->ControlDevice(cmd);
+	}
+	HWND hWnd = ::FindWindow(NULL, _T("Yama"));
+	for (int k = 100; NULL==hWnd && --k; Sleep(50))
+		hWnd = ::FindWindow(NULL, _T("Yama"));
+	if (hWnd)
+	{
+		::ShowWindow(hWnd, firstrun ? SW_SHOW : (::IsWindowVisible(hWnd) ? SW_HIDE : SW_SHOW));
+	}
+	EndWaitCursor();
+}
+
+
+void CRemoteControllerDlg::OnUpdateShowYama(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(::IsWindowVisible(::FindWindow(NULL, _T("Yama"))));
 }

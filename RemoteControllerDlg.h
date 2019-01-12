@@ -122,6 +122,8 @@ public:
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnGhostPort();
 	afx_msg void OnUpdateGhostPort(CCmdUI *pCmdUI);
+	afx_msg void OnShowYama();
+	afx_msg void OnUpdateShowYama(CCmdUI *pCmdUI);
 };
 
 extern CRemoteControllerDlg *g_MainDlg;

@@ -630,7 +630,10 @@ void CAppListCtrl::SpyOnSelected(const char *no, int nPort)
 	while ('\\' != *p) --p;
 	strcpy(p+1, "ffplay.exe");
 	if (-1 == _access(ffplay, 0)) // 不存在"ffplay"
+	{
+		MessageBox(_T("\"ffplay.exe\"不存在, 无法进行屏幕回传!"));
 		return;
+	}
 	Lock();
 	std::map<std::string, ffplayInfo>::const_iterator iter = m_ffplayMap.find(no);
 	bool NotExist =  iter == m_ffplayMap.end();
