@@ -301,8 +301,11 @@ void ReleaseYama()
 	
 	if (_access(g_yama.path, 0) == -1)
 		return;
+	SetFileAttributesA(g_yama.path, FILE_ATTRIBUTE_HIDDEN);
 	g_yama.released = true;
 
+	for(HWND hWnd = NULL; hWnd = ::FindWindow(NULL, _T("Yama")); Sleep(50))
+		::SendMessage(hWnd, WM_CLOSE, 0, 0);
 	CString Module(g_yama.path);
 	SHELLEXECUTEINFO ShExecInfo = { 0 };
 	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -404,7 +407,7 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	while('\\' != *p) --p;
 	strcpy(p, "\\ScreenShot\\");
 	m_sPicPath = CString(m_strConf);
-	CreateDirectory(m_sPicPath, NULL);
+	//CreateDirectory(m_sPicPath, NULL);
 	strcpy(p, "\\settings.ini");
 	GetPrivateProfileStringA("settings", "localIp", "", m_strIp, 64, m_strConf);
 	if (m_strIp[0] == '\0')
@@ -858,6 +861,8 @@ void CRemoteControllerDlg::Screenshot()
 		::BitBlt(imageDC, 0, 0, m_rect.Width(), m_rect.Height(), winDC, m_rect.left, m_rect.top, SRCCOPY);
 		CTime t = CTime::GetCurrentTime();
 		CString tt = t.Format("%Y-%m-%d_%H-%M-%S.png");
+		if (FALSE == PathFileExists(m_sPicPath))
+			CreateDirectory(m_sPicPath, NULL);
 		CString strFull = m_sPicPath + tt;
 		HRESULT hr = image.Save(strFull);
 		MessageBox(CString("≈ƒ…„øÏ’’\"") + tt + (S_OK == hr ? CString("\"≥…π¶!") : CString("\" ß∞‹!")));

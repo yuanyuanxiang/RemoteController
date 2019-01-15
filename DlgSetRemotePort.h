@@ -4,6 +4,10 @@
 
 // CDlgSetRemotePort 对话框
 
+/************************************************************************
+* @class CDlgSetRemotePort
+* @brief 设置守护程序连接的端口
+/************************************************************************/
 class CDlgSetRemotePort : public CDialog
 {
 	DECLARE_DYNAMIC(CDlgSetRemotePort)

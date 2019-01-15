@@ -4,6 +4,10 @@
 
 // CUpdateServerDlg 对话框
 
+/************************************************************************
+* @class CUpdateServerDlg
+* @brief 设置升级服务器地址对话框（如果为端口，则采用socket，否则为IIS）
+/************************************************************************/
 class CUpdateServerDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CUpdateServerDlg)

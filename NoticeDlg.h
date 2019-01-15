@@ -4,6 +4,10 @@
 
 // CNoticeDlg 对话框
 
+/************************************************************************
+* @class CNoticeDlg
+* @brief 提示信息窗口
+/************************************************************************/
 class CNoticeDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CNoticeDlg)

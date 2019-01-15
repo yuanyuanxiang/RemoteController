@@ -22,7 +22,7 @@
 // 解析指令
 #define parse_cmd(buf, arg) {arg=buf; while(*arg && ':'!=*arg)++arg; if(*arg)*arg++=0;}
 
-// 目录访问器[成员易变的]
+// 目录访问器[成员易变的，多线程不安全]
 typedef struct folder
 {
 	char buf[_MAX_PATH], *pos;
@@ -43,6 +43,10 @@ typedef struct folder
 	}
 }folder;
 
+/************************************************************************
+* @struct SocketInfo
+* @brief 每个来请求升级的客户端的信息
+************************************************************************/
 struct SocketInfo
 {
 	enum { STEP_1 = 0, STEP_2, STEP_NUM };

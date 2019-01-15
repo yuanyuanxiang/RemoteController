@@ -4,6 +4,10 @@
 
 // CAliveTimeDlg 对话框
 
+/************************************************************************
+* @class CAliveTimeDlg
+* @brief 设置守护程序心跳周期（刷新频率）
+/************************************************************************/
 class CAliveTimeDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CAliveTimeDlg)

@@ -4,6 +4,10 @@
 
 // CIPConfigDlg 对话框
 
+/************************************************************************
+* @class CIPConfigDlg
+* @brief 设置本地监听IP和端口
+/************************************************************************/
 class CIPConfigDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CIPConfigDlg)

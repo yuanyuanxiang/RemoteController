@@ -4,6 +4,10 @@
 
 // CDlgSetRemoteIP 对话框
 
+/************************************************************************
+* @class CDlgSetRemoteIP
+* @brief 设置守护程序远程IP
+/************************************************************************/
 class CDlgSetRemoteIP : public CDialog
 {
 	DECLARE_DYNAMIC(CDlgSetRemoteIP)
