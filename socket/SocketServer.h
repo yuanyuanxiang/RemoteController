@@ -71,7 +71,7 @@ private:
 	std::map<std::string, std::string> m_mapVersion;
 	void GetAllSoftwareVersion();
 	// 自动生成升级文件列表"filelist.txt"
-	void CheckFilelist(const CString &folder);
+	void CheckFilelist(const CString &folder, const CString &file_list, const CString &root=NULL);
 
 public:
 	// 检测是否需要更新版本，若需要则返回新版本号

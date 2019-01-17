@@ -133,15 +133,24 @@ void CSocketServer::GetAllSoftwareVersion()
 				Lock();
 				m_mapVersion.insert(make_pair(app.tolower(), GetExeVersion(path)));
 				Unlock();
-				CheckFilelist(ff.GetFilePath());
+				CString filelist = ff.GetFilePath() + _T("\\filelist.txt");
+				DeleteFile(filelist);
+				CheckFilelist(ff.GetFilePath(), filelist);
 			}
 		}
 	}
 	ff.Close();
 }
 
-
-void CSocketServer::CheckFilelist(const CString &folder)
+/************************************************************************
+* @brief 扫描指定目录，将该目录下的文件写入指定文件
+* @param[in] folder		指定目录
+* @param[in] file_list	指定文件
+* @param[in] file		file_list根目录
+************************************************************************/
+void CSocketServer::CheckFilelist(const CString &folder, 
+								  const CString &file_list, 
+								  const CString &root)
 {
 	CFileFind ff;
 	CString filter = folder + _T("\\*.*");
@@ -151,12 +160,14 @@ void CSocketServer::CheckFilelist(const CString &folder)
 	while (bFind)
 	{
 		bFind = ff.FindNextFile();
-		if (ff.IsDots() || ff.IsDirectory())continue;
+		if (ff.IsDots())continue;
+		else if(ff.IsDirectory())
+			CheckFilelist(folder + _T("\\") + ff.GetFileName(), file_list, ff.GetFileName());
 		else
 		{
-			CString name = ff.GetFileName();
+			CString name = root.IsEmpty() ? ff.GetFileName() : root + _T("\\") + ff.GetFileName();
 			int n = name.Find(L".conf", 0); // 排除配置文件
-			if (name != L"filelist.txt" && n == -1)
+			if (ff.GetFileName() != L"filelist.txt" && n == -1)
 			{
 				v_AllFiles.push_back(name);
 			}
@@ -164,16 +175,15 @@ void CSocketServer::CheckFilelist(const CString &folder)
 	}
 	ff.Close();
 
-	CString file(folder + _T("\\filelist.txt"));
 	FILE *filelist = NULL;
-	if (filelist = fopen(W2A(file), "wb"))
+	if (filelist = fopen(W2A(file_list), "a+"))
 	{
 		for (std::vector<CString>::const_iterator itor = v_AllFiles.begin(); 
 			itor != v_AllFiles.end(); ++itor)
 		{
 			String cur = W2A(*itor);
 			fwrite(cur, 1, strlen(cur), filelist);
-			fwrite("\r\n", 1, 2, filelist);
+			fwrite("\n", 1, 1, filelist);
 		}
 		fclose(filelist);
 	}
@@ -296,7 +306,9 @@ std::string CSocketServer::getVersion(const std::string &name)
 	while(*p) ++p;
 	while('\\' != *p) --p;
 	sprintf(p+1, "%s", name.c_str());
-	CheckFilelist(CString(path));
+	CString filelist = CString(path)+_T("\\filelist.txt");
+	DeleteFile(filelist);
+	CheckFilelist(CString(path), filelist);
 	sprintf(p+1, "%s\\%s.exe", name.c_str(), name.c_str());
 	std::string ver = GetExeVersion(CString(path));
 	Lock();
