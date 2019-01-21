@@ -413,8 +413,8 @@ BOOL CRemoteControllerDlg::OnInitDialog()
 	if (m_strIp[0] == '\0')
 		strcpy_s(m_strIp, GetLocalHost());
 	GetPrivateProfileStringA("settings", "upServer", "", m_strUp, sizeof(m_strUp), m_strConf);
-	if (0 == strcmp(m_strIp, m_strUp))
-		memset(m_strUp, 0, sizeof(m_strUp));
+	if (0 == strcmp(m_strIp, m_strUp) || strlen(m_strUp) == 0)
+		_itoa(34567, m_strUp, 10);
 	StartUpServer();
 
 	m_nPort = GetPrivateProfileIntA("settings", "port", 9999, m_strConf);
@@ -938,6 +938,11 @@ void CRemoteControllerDlg::StartUpServer()
 				m_strIp, n);
 			MessageBox(CString(err), _T("错误"), MB_ICONERROR);
 		}
+	}else{
+		char info[200];
+		sprintf_s(info, "升级地址为[%s]，请确保该设备支持IIS，\r\n否则程序升级功能无法正常使用，建议改用本机端口。", 
+			m_strIp);
+		MessageBox(CString(info), _T("提示"), MB_ICONINFORMATION);
 	}
 }
 
