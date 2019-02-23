@@ -286,6 +286,11 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_UPDATE_COMMAND_UI(ID_GHOST_PORT, &CRemoteControllerDlg::OnUpdateGhostPort)
 	ON_COMMAND(ID_SHOW_YAMA, &CRemoteControllerDlg::OnShowYama)
 	ON_UPDATE_COMMAND_UI(ID_SHOW_YAMA, &CRemoteControllerDlg::OnUpdateShowYama)
+	ON_COMMAND(ID_ACCEL_STOP, &CRemoteControllerDlg::OnAccelStop)
+	ON_COMMAND(ID_ACCEL_DEBUG, &CRemoteControllerDlg::OnAccelDebug)
+	ON_COMMAND(ID_ACCEL_YAMA, &CRemoteControllerDlg::OnAccelYama)
+	ON_COMMAND(ID_ACCEL_WATCH, &CRemoteControllerDlg::OnAccelWatch)
+	ON_COMMAND(ID_ACCEL_NOTICE, &CRemoteControllerDlg::OnAccelNotice)
 END_MESSAGE_MAP()
 
 
@@ -1257,4 +1262,40 @@ void CRemoteControllerDlg::OnShowYama()
 void CRemoteControllerDlg::OnUpdateShowYama(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(::IsWindowVisible(::FindWindow(NULL, _T("Yama"))));
+}
+
+// Ctrl+T停止选中程序
+void CRemoteControllerDlg::OnAccelStop()
+{
+	POSITION pos = m_ListApps.GetFirstSelectedItemPosition();
+	while (pos)
+	{
+		int nRow = m_ListApps.GetNextSelectedItem(pos);
+		CString no = m_ListApps.GetItemText(nRow, _no);
+		g_pSocket->SendCommand(STOP, W2A(no));
+	}
+}
+
+// Ctrl+D允许对程序进行降级
+void CRemoteControllerDlg::OnAccelDebug()
+{
+	m_bAllowDebug = true;
+}
+
+// Ctrl+G显示/隐藏YAMA
+void CRemoteControllerDlg::OnAccelYama()
+{
+	OnShowYama();
+}
+
+// Ctrl+W回传屏幕
+void CRemoteControllerDlg::OnAccelWatch()
+{
+	OnSpy();
+}
+
+// Ctrl+S发布公告
+void CRemoteControllerDlg::OnAccelNotice()
+{
+	OnNotice();
 }

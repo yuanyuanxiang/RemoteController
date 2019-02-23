@@ -124,6 +124,11 @@ public:
 	afx_msg void OnUpdateGhostPort(CCmdUI *pCmdUI);
 	afx_msg void OnShowYama();
 	afx_msg void OnUpdateShowYama(CCmdUI *pCmdUI);
+	afx_msg void OnAccelStop();
+	afx_msg void OnAccelDebug();
+	afx_msg void OnAccelYama();
+	afx_msg void OnAccelWatch();
+	afx_msg void OnAccelNotice();
 };
 
 extern CRemoteControllerDlg *g_MainDlg;
