@@ -358,6 +358,15 @@ void CAppListCtrl::UpdateApp()
 {
 	if (-1 != m_nIndex && IDYES == MessageBox(_T("确定\"升级\"此程序吗?"), _T("警告"), MB_ICONWARNING | MB_YESNO))
 	{
+		UpdateSelected();
+	}
+}
+
+
+void CAppListCtrl::UpdateSelected()
+{
+	if (-1 != m_nIndex)
+	{
 		TRACE("======> UpdateApp index = %d\n", m_nIndex);
 		USES_CONVERSION;
 		std::vector<CString> v_str;

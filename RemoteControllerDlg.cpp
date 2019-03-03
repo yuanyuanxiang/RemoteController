@@ -291,6 +291,7 @@ BEGIN_MESSAGE_MAP(CRemoteControllerDlg, CDialog)
 	ON_COMMAND(ID_ACCEL_YAMA, &CRemoteControllerDlg::OnAccelYama)
 	ON_COMMAND(ID_ACCEL_WATCH, &CRemoteControllerDlg::OnAccelWatch)
 	ON_COMMAND(ID_ACCEL_NOTICE, &CRemoteControllerDlg::OnAccelNotice)
+	ON_COMMAND(ID_ACCEL_UPDATE, &CRemoteControllerDlg::OnAccelUpdate)
 END_MESSAGE_MAP()
 
 
@@ -1298,4 +1299,10 @@ void CRemoteControllerDlg::OnAccelWatch()
 void CRemoteControllerDlg::OnAccelNotice()
 {
 	OnNotice();
+}
+
+// Ctrl+U升级选中程序
+void CRemoteControllerDlg::OnAccelUpdate()
+{
+	m_ListApps.UpdateSelected();
 }

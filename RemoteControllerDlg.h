@@ -129,6 +129,7 @@ public:
 	afx_msg void OnAccelYama();
 	afx_msg void OnAccelWatch();
 	afx_msg void OnAccelNotice();
+	afx_msg void OnAccelUpdate();
 };
 
 extern CRemoteControllerDlg *g_MainDlg;
