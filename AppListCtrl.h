@@ -111,7 +111,7 @@ public:
 	int GetUdpPort(int base = _BASE_PORT+1);
 
 	// 升级选中程序、无二次确认
-	void UpdateSelected();
+	void UpdateSelected(int row=-1);
 
 	struct ffplayInfo
 	{
