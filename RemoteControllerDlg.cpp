@@ -206,6 +206,7 @@ CRemoteControllerDlg::CRemoteControllerDlg(CWnd* pParent /*=NULL*/)
 	InitializeCriticalSection(&m_cs);
 	g_MainDlg = this;
 	memset(m_strUp, 0, sizeof(m_strUp));
+	m_pUpServer = NULL;
 }
 
 
