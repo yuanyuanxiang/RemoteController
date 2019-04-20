@@ -1214,6 +1214,12 @@ void CRemoteControllerDlg::OnGhostPort()
 				g_pSocket->ControlDevice(cmd);
 				EndWaitCursor();
 			}
+		}else if (dlg.m_nPort >= _BASE_PORT)
+		{
+			char info[128];
+			sprintf_s(info, "幽灵端口越界[%d]，无法监控!", _BASE_PORT);
+			CString tip(info);
+			MessageBox(tip);
 		}
 	}
 }
