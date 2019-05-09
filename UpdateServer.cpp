@@ -72,7 +72,7 @@ int UpdateServer::init(const char *pIp, int nPort)
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 		char buf[256];
-		sprintf_s(buf, "======> 非阻塞模式设置失败, GetLastError= %d\n", nPort, WSAGetLastError());
+		sprintf_s(buf, "======> 非阻塞模式设置失败, GetLastError= %d\n", WSAGetLastError());
 		OutputDebugStringA(buf);
 		return -4;
 	}
